@@ -1,4 +1,7 @@
-# Параметры для DVC pipeline
+config_file: config/train_params.yaml
+model_type: gb
+enable_validation: true
+enable_monitoring: true
 train:
   test_size: 0.2
   random_state: 42
@@ -6,18 +9,17 @@ train:
   max_depth: 10
   min_samples_split: 2
   min_samples_leaf: 1
-
 data:
-  target_column: "quality"
+  target_column: quality
   feature_columns:
-    - "fixed acidity"
-    - "volatile acidity"
-    - "citric acid"
-    - "residual sugar"
-    - "chlorides"
-    - "free sulfur dioxide"
-    - "total sulfur dioxide"
-    - "density"
-    - "pH"
-    - "sulphates"
-    - "alcohol"
+  - fixed acidity
+  - volatile acidity
+  - citric acid
+  - residual sugar
+  - chlorides
+  - free sulfur dioxide
+  - total sulfur dioxide
+  - density
+  - pH
+  - sulphates
+  - alcohol

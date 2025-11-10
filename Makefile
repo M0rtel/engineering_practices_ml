@@ -8,14 +8,14 @@ install: ## Установить зависимости через Poetry
 	poetry install
 
 format: ## Форматировать код (Black, isort, Ruff)
-	poetry run black src tests main.py
-	poetry run isort src tests main.py
-	poetry run ruff format src tests main.py
+	poetry run black src tests scripts main.py
+	poetry run isort src tests scripts main.py
+	poetry run ruff format src tests scripts main.py
 
 lint: ## Запустить линтеры (Ruff, MyPy, Bandit)
-	poetry run ruff check src tests main.py
+	poetry run ruff check src tests scripts main.py
 	poetry run mypy src
-	poetry run bandit -r src
+	poetry run bandit -r src scripts
 
 test: ## Запустить тесты
 	poetry run pytest
