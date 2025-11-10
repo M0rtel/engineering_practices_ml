@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ml-project:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: engineering-practices-ml
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./notebooks:/app/notebooks
+      - ./reports:/app/reports
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app/src
+    command: python main.py
