@@ -150,6 +150,26 @@ docker build -t engineering-practices-ml .
 docker run -it engineering-practices-ml
 ```
 
+### Запуск с MinIO (S3-совместимое хранилище)
+
+```bash
+# Запуск MinIO и проекта
+docker-compose up -d
+
+# Просмотр логов
+docker-compose logs -f
+
+# Остановка
+docker-compose down
+```
+
+MinIO доступен по адресам:
+- **API:** http://localhost:9000
+- **Console:** http://localhost:9001
+- **Credentials:** minioadmin / minioadmin
+
+Подробнее см. `docs/homework_2/MINIO_SETUP.md`
+
 ## Git Workflow
 
 Проект использует следующую структуру веток:
@@ -200,6 +220,9 @@ git checkout -b bugfix/fix-name
 - `docs/homework_1/` - Домашнее задание 1: Настройка рабочего места Data Scientist
   - `REPORT.md` - Отчет о проделанной работе
   - `CHECKLIST.md` - Чеклист выполнения задания
+- `docs/homework_2/` - Домашнее задание 2: Версионирование данных и моделей с DVC
+  - `REPORT.md` - Отчет о проделанной работе
+  - `REPRODUCIBILITY.md` - Инструкции по воспроизведению
 - `docs/GIT_WORKFLOW.md` - Документация по Git workflow
 - `docs/QUICKSTART.md` - Руководство по быстрому старту
 

@@ -166,3 +166,13 @@ poetry.lock
 
 # Docker
 *.log
+
+# DVC
+.dvc/cache
+.dvc/tmp
+.dvc/config.local
+storage/local/*
+!storage/local/.gitkeep
+storage/s3/*
+!storage/s3/.gitkeep
+# Note: .dvc/ directory and *.dvc files should be in Git

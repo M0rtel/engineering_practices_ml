@@ -1,0 +1,13 @@
+[core]
+    remote = minio
+[cache]
+    dir = .dvc/cache
+    type = hardlink, symlink, copy
+['remote "local"']
+    url = storage/local
+['remote "s3"']
+    url = s3://engineering-practices-ml/dvc
+    endpointurl = ""
+['remote "minio"']
+    url = s3://engineering-practices-ml/dvc
+    endpointurl = http://localhost:9000

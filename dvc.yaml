@@ -1,0 +1,34 @@
+stages:
+  prepare_data:
+    cmd: python scripts/prepare_data.py
+    deps:
+      - data/raw/WineQT.csv
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+    metrics:
+      - reports/metrics/data_stats.json
+    plots:
+      - reports/plots/data_distribution.json
+
+  train_model:
+    cmd: python scripts/train_model.py
+    deps:
+      - data/processed/train.csv
+      - src/data_science_project
+    outs:
+      - models/model.pkl
+    metrics:
+      - reports/metrics/model_metrics.json
+    params:
+      - config/train_params.yaml
+
+  evaluate_model:
+    cmd: python scripts/evaluate_model.py
+    deps:
+      - models/model.pkl
+      - data/processed/test.csv
+    metrics:
+      - reports/metrics/evaluation.json
+    plots:
+      - reports/plots/confusion_matrix.json

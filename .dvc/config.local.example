@@ -1,0 +1,9 @@
+# Example local configuration file
+# Copy this to .dvc/config.local and fill in your S3 credentials
+# This file should be in .gitignore
+
+['remote "s3"']
+endpointurl = https://s3.amazonaws.com
+# aws_access_key_id = YOUR_ACCESS_KEY
+# aws_secret_access_key = YOUR_SECRET_KEY
+# region = us-east-1

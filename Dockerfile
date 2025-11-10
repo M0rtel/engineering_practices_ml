@@ -29,5 +29,9 @@ RUN poetry install --no-interaction --no-ansi
 # Set Python path
 ENV PYTHONPATH=/app/src:$PYTHONPATH
 
+# Initialize DVC (if not already initialized)
+# Note: DVC remote storage should be configured separately
+RUN dvc init --no-scm || true
+
 # Default command
 CMD ["python", "main.py"]
