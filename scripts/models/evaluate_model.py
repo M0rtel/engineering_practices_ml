@@ -14,6 +14,7 @@ REPORTS_DIR = Path("reports")
 
 # Создаем директории
 (REPORTS_DIR / "metrics").mkdir(parents=True, exist_ok=True)
+(REPORTS_DIR / "plots").mkdir(parents=True, exist_ok=True)
 
 # Загружаем модель
 print("🤖 Загрузка модели...")
@@ -58,6 +59,21 @@ metrics = {
 # Сохраняем метрики
 with open(REPORTS_DIR / "metrics" / "evaluation.json", "w") as f:
     json.dump(metrics, f, indent=2)
+
+# Создаем данные для confusion matrix (для регрессии - распределение ошибок)
+# Округляем предсказания до целых для создания "confusion matrix"
+y_pred_rounded = y_pred.round().astype(int)
+y_test_int = y_test.astype(int)
+
+# Создаем матрицу совпадений (для регрессии это распределение ошибок)
+confusion_data = {
+    "actual": y_test_int.tolist(),
+    "predicted": y_pred_rounded.tolist(),
+    "errors": (y_pred_rounded - y_test_int).tolist(),
+}
+
+with open(REPORTS_DIR / "plots" / "confusion_matrix.json", "w") as f:
+    json.dump(confusion_data, f, indent=2)
 
 print("✅ Модель оценена!")
 print(f"  Test R²: {metrics['test_r2']:.4f}")

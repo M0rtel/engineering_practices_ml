@@ -134,6 +134,14 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
+*.csv
+*.lock
+*.dvc
+.dvc/*
+reports/experiments/*
+reports/metrics/*
+config/experiments/*
+
 # Data Science specific
 data/processed/*
 data/external/*
@@ -176,3 +184,11 @@ storage/local/*
 storage/s3/*
 !storage/s3/.gitkeep
 # Note: .dvc/ directory and *.dvc files should be in Git
+
+# Experiments
+experiments/*
+!experiments/.gitkeep
+reports/experiments/*
+reports/plots/*
+!reports/experiments/.gitkeep
+!reports/plots/.gitkeep

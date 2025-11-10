@@ -55,7 +55,7 @@ docker compose up -d minio
 **Добавление данных в DVC:**
 ```bash
 # Автоматически
-./scripts/track_data.sh data/raw/WineQT.csv
+./scripts/data/track_data.sh data/raw/WineQT.csv
 
 # Вручную
 dvc add data/raw/WineQT.csv
@@ -80,7 +80,7 @@ dvc_utils.push_data(remote="minio")
 ```yaml
 stages:
   prepare_data:
-    cmd: python scripts/prepare_data.py
+    cmd: python scripts/data/prepare_data.py
     deps:
       - data/raw/WineQT.csv
     outs:
@@ -112,7 +112,7 @@ dvc add models/model.pkl
 
 **Добавление модели:**
 ```bash
-./scripts/track_model.sh models/model.pkl reports/metrics/model_metrics.json
+./scripts/data/track_model.sh models/model.pkl reports/metrics/model_metrics.json
 ```
 
 **Версионирование метрик:**
@@ -173,15 +173,35 @@ comparison = dvc_utils.compare_versions("models/model.pkl", "HEAD~1", "HEAD")
 
 ### 3.1. Инструкции по воспроизведению
 
-Создан документ `docs/homework_2/REPRODUCIBILITY.md` с инструкциями:
-- Установка и настройка DVC
-- Настройка remote storage (Local, MinIO, S3)
-- Загрузка данных и моделей
-- Воспроизведение pipeline
-- Использование Docker
+Созданы инструкции по воспроизведению проекта:
+
+**Основные шаги:**
+1. Клонировать репозиторий и установить зависимости
+2. Инициализировать DVC: `dvc init --no-scm`
+3. Настроить remote storage (Local, MinIO или S3)
+4. Загрузить данные: `dvc pull`
+5. Воспроизвести pipeline: `dvc repro`
+
+**Настройка MinIO:**
+```bash
+docker compose up -d minio
+./scripts/setup/setup_minio.sh
+```
+
+**Воспроизведение pipeline:**
+```bash
+# Очистка результатов
+rm -rf data/processed/* models/* reports/metrics/*
+
+# Воспроизведение
+dvc repro
+
+# Проверка
+ls -lh models/ reports/metrics/
+```
 
 **Скриншот:** Инструкции по воспроизведению
-*(Здесь должен быть скриншот документа REPRODUCIBILITY.md)*
+*(Здесь должен быть скриншот успешного выполнения `dvc repro`)*
 
 ### 3.2. Фиксация версий зависимостей
 

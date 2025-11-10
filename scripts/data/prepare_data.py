@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -15,6 +16,7 @@ REPORTS_DIR = Path("reports")
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 (REPORTS_DIR / "metrics").mkdir(parents=True, exist_ok=True)
+(REPORTS_DIR / "plots").mkdir(parents=True, exist_ok=True)
 
 # Загружаем данные
 print("📊 Загрузка данных...")
@@ -50,6 +52,20 @@ stats = {
 
 with open(REPORTS_DIR / "metrics" / "data_stats.json", "w") as f:
     json.dump(stats, f, indent=2)
+
+# Создаем данные для графика распределения
+distribution_data: dict[str, Any]
+if "quality" in df.columns:
+    distribution = df["quality"].value_counts().sort_index().to_dict()
+    distribution_data = {
+        "quality": list(distribution.keys()),
+        "count": list(distribution.values()),
+    }
+else:
+    distribution_data = {"message": "Target column 'quality' not found"}
+
+with open(REPORTS_DIR / "plots" / "data_distribution.json", "w") as f:
+    json.dump(distribution_data, f, indent=2)
 
 print("✅ Данные подготовлены!")
 print(f"  Train: {len(train_df)} записей")

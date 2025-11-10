@@ -103,6 +103,7 @@ module = [
     "seaborn.*",
     "jupyter.*",
     "yaml",
+    "pandas.*",
 ]
 ignore_missing_imports = true
 

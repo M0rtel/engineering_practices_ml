@@ -12,8 +12,12 @@ fi
 
 echo "📊 Добавление $DATA_FILE в DVC..."
 
-# Добавляем файл в DVC
-dvc add "$DATA_FILE"
+# Добавляем файл в DVC (используем poetry run если доступно)
+if command -v poetry &> /dev/null; then
+    poetry run dvc add "$DATA_FILE"
+else
+    dvc add "$DATA_FILE"
+fi
 
 echo "✅ Файл $DATA_FILE добавлен в DVC"
 echo ""
