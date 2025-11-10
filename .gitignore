@@ -137,9 +137,9 @@ Thumbs.db
 *.csv
 *.lock
 *.dvc
+*json
 .dvc/*
 reports/experiments/*
-reports/metrics/*
 config/experiments/*
 
 # Data Science specific

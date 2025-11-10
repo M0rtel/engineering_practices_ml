@@ -22,15 +22,15 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Run Black
-        run: poetry run black --check src tests main.py
+        run: poetry run black --check src tests scripts main.py
       - name: Run isort
-        run: poetry run isort --check-only src tests main.py
+        run: poetry run isort --check-only src tests scripts main.py
       - name: Run Ruff
-        run: poetry run ruff check src tests main.py
+        run: poetry run ruff check src tests scripts main.py
       - name: Run MyPy
         run: poetry run mypy src
       - name: Run Bandit
-        run: poetry run bandit -r src
+        run: poetry run bandit -r src scripts
 
   test:
     runs-on: ubuntu-latest

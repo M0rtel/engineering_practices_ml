@@ -193,6 +193,9 @@ poetry run dvc repro prepare_data
 
 # Проверка статуса
 poetry run dvc status
+
+# Просмотр графа зависимостей
+poetry run dvc dag
 ```
 
 **Ожидаемый результат:**
@@ -200,10 +203,32 @@ poetry run dvc status
 - Созданы метрики: `reports/metrics/data_stats.json`
 - Создан plot: `reports/plots/data_distribution.json`
 
-## Шаг 7: Обучение модели
+**Примечание:** Скрипт использует Pydantic для валидации конфигурации из `config/train_params.yaml`.
+
+## Шаг 7: Валидация данных
+
+### 7.1. Запуск валидации данных
 
 ```bash
-# Запуск стадии train_model
+# Запуск стадии validate_data
+poetry run dvc repro validate_data
+
+# Проверка результата
+cat reports/metrics/data_validation.json
+```
+
+**Ожидаемый результат:**
+- Создан файл валидации: `reports/metrics/data_validation.json`
+- Проверены: наличие целевой переменной, признаков, отсутствие пропусков
+
+**Примечание:** Валидация выполняется автоматически с использованием Pydantic моделей для проверки конфигурации.
+
+## Шаг 8: Обучение модели
+
+### 8.1. Запуск обучения модели
+
+```bash
+# Запуск стадии train_model (использует модель из конфигурации)
 poetry run dvc repro train_model
 
 # Проверка результата
@@ -215,7 +240,50 @@ cat reports/metrics/model_metrics.json
 - Создана модель: `models/model.pkl`
 - Созданы метрики: `reports/metrics/model_metrics.json`
 
-## Шаг 8: Оценка модели
+### 8.2. Использование разных типов моделей
+
+Модель выбирается через параметр `model_type` в `dvc.yaml` или через конфигурацию:
+
+**Через утилиту для изменения параметров:**
+```bash
+# Использование утилиты для изменения параметров и запуска
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=rf
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+```
+
+**Или изменение params.yaml напрямую:**
+```bash
+# Изменить model_type в params.yaml
+# Затем запустить
+poetry run dvc repro train_model
+```
+
+**Через конфигурационный файл:**
+```yaml
+# config/train_params.yaml
+model:
+  model_type: rf  # или linear, ridge, lasso, elasticnet, knn, svr, dt, rf, ada, gb
+  params:
+    n_estimators: 100
+    max_depth: 10
+```
+
+**Поддерживаемые типы моделей:**
+- `linear` - Linear Regression
+- `ridge` - Ridge Regression
+- `lasso` - Lasso Regression
+- `elasticnet` - ElasticNet Regression
+- `knn` - K-Nearest Neighbors
+- `svr` - Support Vector Regression
+- `dt` - Decision Tree
+- `rf` - Random Forest (по умолчанию)
+- `ada` - AdaBoost
+- `gb` - Gradient Boosting
+
+**Примечание:** Все конфигурации валидируются через Pydantic модели для обеспечения корректности параметров.
+
+## Шаг 9: Оценка модели
 
 ```bash
 # Запуск стадии evaluate_model
@@ -223,21 +291,96 @@ poetry run dvc repro evaluate_model
 
 # Проверка результата
 cat reports/metrics/evaluation.json
+cat reports/plots/confusion_matrix.json
 ```
 
 **Ожидаемый результат:**
 - Созданы метрики оценки: `reports/metrics/evaluation.json`
 - Создан plot: `reports/plots/confusion_matrix.json`
 
-## Шаг 9: Работа с remote storage
+**Примечание:** Скрипт использует Pydantic для загрузки конфигурации и определения признаков.
+
+## Шаг 10: Мониторинг пайплайна
+
+### 10.1. Запуск мониторинга
+
+```bash
+# Запуск стадии monitor_pipeline (автоматически после evaluate_model)
+poetry run dvc repro monitor_pipeline
+
+# Или запуск полного пайплайна с мониторингом
+python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+```
+
+**Ожидаемый результат:**
+- Создан отчет мониторинга: `reports/monitoring/pipeline_report.json`
+- Выведена сводка выполнения всех стадий
+- Показаны метрики времени выполнения
+
+### 10.2. Просмотр отчета мониторинга
+
+```bash
+# Просмотр последнего отчета
+cat reports/monitoring/pipeline_report.json
+
+# Или через Python
+python -c "
+import json
+from pathlib import Path
+report = json.load(open('reports/monitoring/pipeline_report.json'))
+print('Статус:', report['summary'])
+"
+```
+
+**Содержание отчета:**
+- Статус каждой стадии (pending, running, completed, failed)
+- Время выполнения каждой стадии
+- Метрики и ошибки (если есть)
+- Общая сводка выполнения
+
+### 10.3. Запуск полного пайплайна с мониторингом
+
+```bash
+# Запуск всего пайплайна с автоматическим мониторингом
+python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+
+# Запуск конкретных стадий
+python scripts/pipeline/run_pipeline.py \
+  --config config/train_params.yaml \
+  --monitor \
+  --stages prepare_data validate_data train_model
+```
+
+**Преимущества:**
+- Автоматическое отслеживание всех стадий
+- Детальные отчеты о выполнении
+- Уведомления о завершении
+- Сохранение истории выполнения
+
+## Шаг 11: Работа с remote storage
+
+### Настройка default remote
+
+Перед использованием `dvc push` или `dvc pull` без указания `-r` необходимо установить default remote:
+
+```bash
+# Установить local как default remote (для локальной разработки)
+poetry run dvc remote default local
+
+# Или установить minio как default remote (если MinIO запущен)
+poetry run dvc remote default minio
+
+# Проверить текущий default remote
+poetry run dvc remote default
+```
 
 ### Отправка данных в remote storage
 
 ```bash
-# Отправка в default remote (minio)
+# Отправка в default remote
 poetry run dvc push
 
-# Отправка в конкретный remote
+# Отправка в конкретный remote (без установки default)
 poetry run dvc push --remote local
 poetry run dvc push --remote minio
 ```
@@ -248,16 +391,18 @@ poetry run dvc push --remote minio
 # Загрузка из default remote
 poetry run dvc pull
 
-# Загрузка из конкретного remote
+# Загрузка из конкретного remote (без установки default)
 poetry run dvc pull --remote local
 poetry run dvc pull --remote minio
 ```
 
-**Важно:** Перед `dvc pull` убедитесь, что все стадии pipeline выполнены, иначе могут возникнуть ошибки с отсутствующими файлами.
+**Важно:**
+- Перед `dvc pull` убедитесь, что все стадии pipeline выполнены, иначе могут возникнуть ошибки с отсутствующими файлами.
+- Если default remote не установлен, используйте `-r <remote_name>` для указания конкретного remote.
 
-## Шаг 10: Работа с экспериментами
+## Шаг 12: Работа с экспериментами
 
-### 10.1. Настройка системы экспериментов
+### 12.1. Настройка системы экспериментов
 
 ```bash
 # Автоматическая настройка
@@ -268,7 +413,7 @@ poetry run dvc pull --remote minio
 # - Необходимые директории
 ```
 
-### 10.2. Запуск всех экспериментов
+### 12.2. Запуск всех экспериментов
 
 ```bash
 # Запуск всех 26 экспериментов
@@ -280,7 +425,7 @@ python scripts/experiments/run_experiment.py \
   --config config/experiments/exp_018_rf_100_10.yaml
 ```
 
-### 10.3. Сравнение и фильтрация экспериментов
+### 12.3. Сравнение и фильтрация экспериментов
 
 ```bash
 # Список всех экспериментов
@@ -304,7 +449,7 @@ python scripts/experiments/compare_experiments.py --search ridge
 python scripts/experiments/compare_experiments.py --export experiments.csv
 ```
 
-### 10.4. Использование Python API для экспериментов
+### 12.4. Использование Python API для экспериментов
 
 ```python
 from src.data_science_project import experiment_tracker
@@ -334,7 +479,89 @@ with experiment("exp_001", params={"alpha": 1.0}) as tracker:
     tracker.log_metrics("exp_001", metrics)
 ```
 
-## Шаг 11: Проверка качества кода
+## Шаг 13: Запуск полного ML пайплайна
+
+### 13.1. Запуск всего пайплайна одной командой
+
+```bash
+# Запуск всех стадий последовательно
+poetry run dvc repro
+
+# Это выполнит:
+# 1. prepare_data - подготовка данных
+# 2. validate_data - валидация данных
+# 3. train_model - обучение модели
+# 4. evaluate_model - оценка модели
+# 5. monitor_pipeline - мониторинг выполнения
+```
+
+### 13.2. Параллельное выполнение независимых стадий
+
+```bash
+# DVC автоматически определит независимые стадии и выполнит их параллельно
+poetry run dvc repro --jobs 4
+
+# Например, validate_data и train_model могут выполняться параллельно
+# после завершения prepare_data
+```
+
+### 13.3. Запуск с изменением параметров
+
+```bash
+# Использование утилиты для изменения параметров
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+
+# Изменение нескольких параметров
+poetry run python scripts/pipeline/run_with_params.py train_model \
+  -S model_type=ridge \
+  -S enable_validation=true
+
+# Или изменение params.yaml напрямую
+# 1. Отредактировать params.yaml (изменить model_type)
+# 2. poetry run dvc repro train_model
+```
+
+### 13.4. Запуск с мониторингом
+
+```bash
+# Запуск через скрипт с полным мониторингом
+poetry run python scripts/pipeline/run_pipeline.py \
+  --config config/train_params.yaml \
+  --monitor
+
+# Результат:
+# - Выполнение всех стадий
+# - Отслеживание времени выполнения
+# - Сохранение отчета мониторинга
+# - Уведомление о завершении
+```
+
+### 13.5. Просмотр графа зависимостей
+
+```bash
+# Визуализация зависимостей между стадиями
+poetry run dvc dag
+
+# Вывод покажет:
+# - Порядок выполнения стадий
+# - Зависимости между стадиями
+# - Возможности параллельного выполнения
+```
+
+### 13.6. Проверка статуса пайплайна
+
+```bash
+# Проверка, какие стадии нужно перезапустить
+poetry run dvc status
+
+# Вывод покажет:
+# - Измененные зависимости
+# - Стадии, требующие перезапуска
+# - Статус кэширования
+```
+
+## Шаг 14: Проверка качества кода
 
 ### Форматирование кода
 
@@ -383,7 +610,7 @@ make test
 make test-cov
 ```
 
-## Шаг 12: Работа с Docker
+## Шаг 15: Работа с Docker
 
 ### Сборка образа
 
@@ -420,7 +647,7 @@ docker compose down
 docker compose down -v
 ```
 
-## Шаг 13: Работа с Git
+## Шаг 16: Работа с Git
 
 ### Структура веток
 
@@ -547,8 +774,21 @@ poetry run dvc repro
 
 # Запуск конкретной стадии
 poetry run dvc repro prepare_data
+poetry run dvc repro validate_data
 poetry run dvc repro train_model
 poetry run dvc repro evaluate_model
+poetry run dvc repro monitor_pipeline
+
+# Запуск нескольких стадий
+poetry run dvc repro prepare_data validate_data train_model
+
+# Запуск с изменением параметров через утилиту
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+
+# Или изменение params.yaml и запуск
+# 1. Изменить model_type в params.yaml
+# 2. poetry run dvc repro train_model
 
 # Сравнение метрик
 poetry run dvc metrics diff
@@ -630,6 +870,13 @@ poetry run pytest
 
 # 6. Запуск основного pipeline
 poetry run dvc repro
+
+# 7. Проверка мониторинга
+ls -lh reports/monitoring/
+cat reports/monitoring/pipeline_report.json
+
+# 8. Проверка Pydantic моделей
+poetry run python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
 ```
 
 ## Следующие шаги
@@ -641,11 +888,15 @@ poetry run dvc repro
    - `docs/homework_1/REPORT.md` - настройка рабочего места
    - `docs/homework_2/REPORT.md` - версионирование данных и моделей
    - `docs/homework_3/REPORT.md` - трекинг экспериментов
+   - `docs/homework_4/REPORT.md` - автоматизация ML пайплайнов
 
 2. **Начните работу:**
-   - Запустите pipeline: `poetry run dvc repro`
+   - Запустите полный pipeline: `poetry run dvc repro`
+   - Запустите с мониторингом: `python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor`
+   - Попробуйте разные модели: `poetry run dvc repro train_model -S model_type=ridge`
    - Проведите эксперименты: `python scripts/experiments/run_all_experiments.py`
    - Изучите результаты: `python scripts/experiments/compare_experiments.py --list`
+   - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json`
 
 3. **Настройте CI/CD:**
    - GitHub Actions уже настроен в `.github/workflows/ci.yml`
@@ -662,9 +913,13 @@ poetry run dvc repro
 
 1. **Всегда используйте `poetry run`** для команд Python/DVC, если не активировано окружение
 2. **MinIO должен быть запущен** перед использованием `dvc push/pull` с MinIO remote
-3. **Выполняйте pipeline последовательно:** `prepare_data` → `train_model` → `evaluate_model`
-4. **Проверяйте статус DVC** перед push/pull: `poetry run dvc status`
-5. **Credentials для MinIO** хранятся в `.dvc/config.local` (не в Git)
+3. **Выполняйте pipeline последовательно:** `prepare_data` → `validate_data` → `train_model` → `evaluate_model` → `monitor_pipeline`
+4. **Или запускайте все сразу:** `poetry run dvc repro` (DVC автоматически определит порядок)
+5. **Проверяйте статус DVC** перед push/pull: `poetry run dvc status`
+6. **Credentials для MinIO** хранятся в `.dvc/config.local` (не в Git)
+7. **Конфигурации валидируются через Pydantic** - проверяйте корректность параметров в `config/train_params.yaml`
+8. **Мониторинг пайплайна** автоматически сохраняет отчеты в `reports/monitoring/`
+9. **Параллельное выполнение** доступно через `dvc repro --jobs N` для независимых стадий
 
 ---
 
