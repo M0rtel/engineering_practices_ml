@@ -1,6 +1,6 @@
 stages:
   prepare_data:
-    cmd: python scripts/prepare_data.py
+    cmd: python scripts/data/prepare_data.py
     deps:
       - data/raw/WineQT.csv
     outs:
@@ -12,19 +12,18 @@ stages:
       - reports/plots/data_distribution.json
 
   train_model:
-    cmd: python scripts/train_model.py
+    cmd: python scripts/models/train_model.py
     deps:
       - data/processed/train.csv
+      - config/train_params.yaml
       - src/data_science_project
     outs:
       - models/model.pkl
     metrics:
       - reports/metrics/model_metrics.json
-    params:
-      - config/train_params.yaml
 
   evaluate_model:
-    cmd: python scripts/evaluate_model.py
+    cmd: python scripts/models/evaluate_model.py
     deps:
       - models/model.pkl
       - data/processed/test.csv

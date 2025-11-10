@@ -30,6 +30,10 @@ engineering_practices_ml/
 ├── notebooks/        # Jupyter notebooks
 ├── docs/             # Документация
 ├── scripts/          # Вспомогательные скрипты
+│   ├── setup/        # Скрипты настройки
+│   ├── data/         # Скрипты для работы с данными
+│   ├── models/       # Скрипты для моделей
+│   └── experiments/  # Скрипты для экспериментов
 ├── config/           # Конфигурационные файлы
 ├── reports/          # Отчеты и результаты
 │   ├── figures/      # Графики и визуализации
@@ -219,10 +223,10 @@ git checkout -b bugfix/fix-name
 
 - `docs/homework_1/` - Домашнее задание 1: Настройка рабочего места Data Scientist
   - `REPORT.md` - Отчет о проделанной работе
-  - `CHECKLIST.md` - Чеклист выполнения задания
 - `docs/homework_2/` - Домашнее задание 2: Версионирование данных и моделей с DVC
   - `REPORT.md` - Отчет о проделанной работе
-  - `REPRODUCIBILITY.md` - Инструкции по воспроизведению
+- `docs/homework_3/` - Домашнее задание 3: Трекинг экспериментов с DVC
+  - `REPORT.md` - Отчет о проделанной работе
 - `docs/GIT_WORKFLOW.md` - Документация по Git workflow
 - `docs/QUICKSTART.md` - Руководство по быстрому старту
 
