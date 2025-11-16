@@ -1,0 +1,68 @@
+stages:
+  prepare_data:
+    cmd: python scripts/data/prepare_data.py --config ${config_file}
+    deps:
+      - data/raw/WineQT.csv
+      - ${config_file}
+      - scripts/data/prepare_data.py
+    params:
+      - config_file
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+    metrics:
+      - reports/metrics/data_stats.json
+    plots:
+      - reports/plots/data_distribution.json
+
+  validate_data:
+    cmd: python scripts/data/validate_data.py --config ${config_file}
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - ${config_file}
+      - scripts/data/validate_data.py
+    params:
+      - config_file
+    metrics:
+      - reports/metrics/data_validation.json
+
+  train_model:
+    cmd: python scripts/models/train_model.py --config ${config_file} --model-type ${model_type}
+    deps:
+      - data/processed/train.csv
+      - ${config_file}
+      - src/data_science_project
+      - scripts/models/train_model.py
+    params:
+      - config_file
+      - model_type
+    outs:
+      - models/model.pkl
+    metrics:
+      - reports/metrics/model_metrics.json
+
+  evaluate_model:
+    cmd: python scripts/models/evaluate_model.py --config ${config_file}
+    deps:
+      - models/model.pkl
+      - data/processed/test.csv
+      - ${config_file}
+      - scripts/models/evaluate_model.py
+    params:
+      - config_file
+    metrics:
+      - reports/metrics/evaluation.json
+    plots:
+      - reports/plots/confusion_matrix.json
+
+  monitor_pipeline:
+    cmd: python scripts/pipeline/run_pipeline.py --config ${config_file} --monitor --report-only
+    deps:
+      - reports/metrics/evaluation.json
+      - ${config_file}
+      - scripts/pipeline/run_pipeline.py
+    params:
+      - config_file
+    outs:
+      - reports/monitoring/pipeline_report.json

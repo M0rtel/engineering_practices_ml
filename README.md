@@ -30,7 +30,14 @@ engineering_practices_ml/
 ├── notebooks/        # Jupyter notebooks
 ├── docs/             # Документация
 ├── scripts/          # Вспомогательные скрипты
+│   ├── setup/        # Скрипты настройки
+│   ├── data/         # Скрипты для работы с данными
+│   ├── models/       # Скрипты для моделей
+│   ├── experiments/  # Скрипты для экспериментов
+│   └── pipeline/     # Скрипты для пайплайнов
 ├── config/           # Конфигурационные файлы
+├── params.yaml       # Параметры DVC pipeline
+├── dvc.yaml          # Конфигурация DVC pipeline
 ├── reports/          # Отчеты и результаты
 │   ├── figures/      # Графики и визуализации
 │   └── models/       # Сохраненные модели
@@ -102,6 +109,25 @@ pre-commit run --all-files
 python main.py
 ```
 
+### Запуск ML пайплайна
+
+```bash
+# Запуск всего пайплайна
+poetry run dvc repro
+
+# Запуск конкретной стадии
+poetry run dvc repro prepare_data
+poetry run dvc repro train_model
+
+# Запуск с изменением параметров
+poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+
+# Запуск с мониторингом
+poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+```
+
+Подробнее см. `docs/QUICKSTART.md`
+
 ### Форматирование кода
 
 ```bash
@@ -150,6 +176,26 @@ docker build -t engineering-practices-ml .
 docker run -it engineering-practices-ml
 ```
 
+### Запуск с MinIO (S3-совместимое хранилище)
+
+```bash
+# Запуск MinIO и проекта
+docker-compose up -d
+
+# Просмотр логов
+docker-compose logs -f
+
+# Остановка
+docker-compose down
+```
+
+MinIO доступен по адресам:
+- **API:** http://localhost:9000
+- **Console:** http://localhost:9001
+- **Credentials:** minioadmin / minioadmin
+
+Подробнее см. `docs/QUICKSTART.md` (раздел "Настройка DVC" и "Запуск с MinIO")
+
 ## Git Workflow
 
 Проект использует следующую структуру веток:
@@ -195,11 +241,24 @@ git checkout -b bugfix/fix-name
 
 Все инструменты настроены через pre-commit hooks и запускаются автоматически при коммите.
 
+## Основные инструменты проекта
+
+- **DVC** - версионирование данных и моделей, оркестрация пайплайнов
+- **Pydantic** - валидация и управление конфигурациями
+- **Poetry** - управление зависимостями
+- **MinIO** - S3-совместимое хранилище для DVC
+- **GitHub Actions** - CI/CD автоматизация
+
 ## Документация
 
 - `docs/homework_1/` - Домашнее задание 1: Настройка рабочего места Data Scientist
   - `REPORT.md` - Отчет о проделанной работе
-  - `CHECKLIST.md` - Чеклист выполнения задания
+- `docs/homework_2/` - Домашнее задание 2: Версионирование данных и моделей с DVC
+  - `REPORT.md` - Отчет о проделанной работе
+- `docs/homework_3/` - Домашнее задание 3: Трекинг экспериментов с DVC
+  - `REPORT.md` - Отчет о проделанной работе
+- `docs/homework_4/` - Домашнее задание 4: Автоматизация ML пайплайнов
+  - `REPORT.md` - Отчет о проделанной работе
 - `docs/GIT_WORKFLOW.md` - Документация по Git workflow
 - `docs/QUICKSTART.md` - Руководство по быстрому старту
 
