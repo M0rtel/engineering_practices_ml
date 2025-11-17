@@ -4,6 +4,8 @@
 
 Данный отчет описывает процесс настройки полноценного рабочего места для Data Science с использованием современных инженерных практик. Все инструменты настроены и автоматизированы для обеспечения воспроизводимости результатов.
 
+> **Примечание:** Для получения пошаговых инструкций по настройке проекта см. `docs/QUICKSTART.md`. Данный отчет описывает **что было настроено**, а не **как это настроить**.
+
 ## 1. Структура проекта (2 балла)
 
 ### 1.1. Создание структуры папок
@@ -59,12 +61,7 @@ engineering_practices_ml/
 
 ### 2.1. Pre-commit hooks
 
-Настроены pre-commit hooks через `.pre-commit-config.yaml`:
-
-**Установка:**
-```bash
-poetry run pre-commit install
-```
+Настроены pre-commit hooks через `.pre-commit-config.yaml`.
 
 **Проверяемые аспекты:**
 - Удаление trailing whitespace
@@ -92,11 +89,6 @@ poetry run pre-commit install
 - **Целевая версия Python:** 3.10
 - **Исключения:** `.eggs`, `.git`, `.venv`, `build`, `dist`
 
-**Использование:**
-```bash
-poetry run black src tests main.py
-```
-
 **Скриншот:** Результат форматирования кода с помощью Black
 *(Здесь должен быть скриншот до/после форматирования или вывода команды)*
 
@@ -106,22 +98,13 @@ poetry run black src tests main.py
 - **Многострочный вывод:** 3
 - **Конфигурация:** `pyproject.toml`
 
-**Использование:**
-```bash
-poetry run isort src tests main.py
-```
-
 #### Ruff
 - **Длина строки:** 88 символов
 - **Целевая версия:** Python 3.10
 - **Правила:** E, W, F, I, B, C4, UP
 - **Конфигурация:** `pyproject.toml`
 
-**Использование:**
-```bash
-poetry run ruff check src tests main.py
-poetry run ruff format src tests main.py
-```
+**Примечание:** Подробные инструкции по использованию инструментов форматирования см. в `docs/QUICKSTART.md`.
 
 ### 2.3. Линтеры
 
@@ -131,15 +114,10 @@ poetry run ruff format src tests main.py
 - **Игнорирование импортов:** для sklearn, matplotlib, seaborn, jupyter
 - **Конфигурация:** `pyproject.toml`
 
-**Использование:**
-```bash
-poetry run mypy src
-```
-
 **Скриншот:** Результаты проверки типов MyPy
 *(Здесь должен быть скриншот вывода MyPy с результатами проверки)*
 
-**Настройки:**
+**Настройки MyPy:**
 - `warn_return_any = true`
 - `disallow_untyped_defs = true`
 - `disallow_incomplete_defs = true`
@@ -150,11 +128,6 @@ poetry run mypy src
 - **Проверка безопасности кода**
 - **Исключения:** тесты, виртуальные окружения
 - **Пропуски:** B101 (assert_used)
-
-**Использование:**
-```bash
-poetry run bandit -r src
-```
 
 **Скриншот:** Результаты проверки безопасности Bandit
 *(Здесь должен быть скриншот вывода Bandit с результатами проверки)*
@@ -185,59 +158,22 @@ poetry run bandit -r src
 - pre-commit - автоматизация проверок
 - pytest, pytest-cov - тестирование
 
-**Установка:**
-```bash
-# Установка Poetry
-curl -sSL https://install.python-poetry.org | python3 -
-
-# Установка зависимостей
-poetry install
-
-# Активация виртуального окружения
-poetry shell
-```
+**Примечание:** Пошаговые инструкции по установке Poetry и зависимостей см. в `docs/QUICKSTART.md` (Шаг 2-3).
 
 **Скриншот:** Результат установки зависимостей через Poetry
 *(Здесь должен быть скриншот вывода команды poetry install)*
 
 ### 3.2. requirements.txt с точными версиями
 
-Создан `requirements.txt` с точными версиями всех зависимостей для воспроизводимости:
-
-```
-pandas==2.1.0
-numpy==1.24.3
-scikit-learn==1.3.0
-matplotlib==3.7.2
-seaborn==0.12.2
-jupyter==1.0.0
-ipykernel==6.25.0
-...
-```
-
-**Использование:**
-```bash
-pip install -r requirements.txt
-```
+Создан `requirements.txt` с точными версиями всех зависимостей для воспроизводимости. Файл содержит все зависимости проекта (pandas, numpy, scikit-learn, matplotlib, seaborn, jupyter и др.) с фиксированными версиями для альтернативной установки через `pip install -r requirements.txt`.
 
 ### 3.3. Виртуальное окружение
 
-Poetry автоматически создает и управляет виртуальным окружением:
-
-```bash
-# Создание окружения
-poetry install
-
-# Активация
-poetry shell
-
-# Информация об окружении
-poetry env info
-```
+Poetry автоматически создает и управляет виртуальным окружением. Виртуальное окружение создается при выполнении `poetry install` и может быть активировано через `poetry shell`.
 
 ### 3.4. Dockerfile для контейнеризации
 
-Создан `Dockerfile` для контейнеризации проекта:
+Создан `Dockerfile` для контейнеризации проекта.
 
 **Особенности:**
 - Базовый образ: Python 3.10-slim
@@ -246,35 +182,20 @@ poetry env info
 - Настройка PYTHONPATH
 - Рабочая директория: /app
 
-**Сборка и запуск:**
-```bash
-# Сборка образа
-docker build -t engineering-practices-ml .
-
-# Запуск контейнера
-docker run -it engineering-practices-ml
-
-# Или через docker-compose
-docker-compose up
-```
+**Дополнительно:**
+- Создан `.dockerignore` для исключения ненужных файлов
+- Создан `docker-compose.yml` для упрощения работы с контейнерами
 
 **Скриншот:** Успешная сборка Docker образа
 *(Здесь должен быть скриншот вывода docker build)*
 
-**Дополнительно:**
-- Создан `.dockerignore` для исключения ненужных файлов
-- Создан `docker-compose.yml` для упрощения работы с контейнерами
+**Примечание:** Инструкции по сборке и запуску Docker контейнера см. в `docs/QUICKSTART.md`.
 
 ## 4. Git workflow (1 балл)
 
 ### 4.1. Настройка Git репозитория
 
-Инициализирован Git репозиторий:
-```bash
-git init
-git branch -m master main
-git checkout -b develop
-```
+Инициализирован Git репозиторий с основной веткой `main` и веткой разработки `develop`.
 
 ### 4.2. .gitignore для ML проекта
 

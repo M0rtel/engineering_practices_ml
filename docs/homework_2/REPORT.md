@@ -4,24 +4,18 @@
 
 Настроена система версионирования данных и моделей с использованием DVC (Data Version Control) и MinIO (S3-совместимое хранилище). Все компоненты автоматизированы и готовы к использованию.
 
+> **Примечание:** Для получения пошаговых инструкций по настройке DVC см. `docs/QUICKSTART.md` (Шаг 5-13). Данный отчет описывает **что было настроено**, а не **как это настроить**.
+
 ## 1. Настройка выбранного инструмента для данных (4 балла)
 
 ### 1.1. Установка и настройка DVC
 
-**Установка через Poetry:**
-```toml
-dvc = {extras = ["s3"], version = "^3.48.0"}
-boto3 = "^1.34.0"
-pyyaml = "^6.0.1"
-```
-
-**Инициализация:**
-```bash
-dvc init --no-scm
-```
+DVC установлен через Poetry с поддержкой S3 (`dvc[s3]`, версия `^3.48.0`). Дополнительные зависимости: `boto3` и `pyyaml`. DVC инициализирован через `dvc init --no-scm`.
 
 **Скриншот:** Результат инициализации DVC
 *(Здесь должен быть скриншот вывода команды `dvc init`)*
+
+**Примечание:** Пошаговые инструкции по установке и инициализации DVC см. в `docs/QUICKSTART.md` (Шаг 5.1).
 
 ### 1.2. Настройка remote storage
 
@@ -42,88 +36,45 @@ dvc init --no-scm
     url = s3://engineering-practices-ml/dvc
 ```
 
-**MinIO запускается через docker-compose:**
-```bash
-docker compose up -d minio
-```
+MinIO интегрирован в docker-compose и запускается автоматически. Конфигурация сохранена в `.dvc/config`.
 
 **Скриншот:** Конфигурация remote storage и MinIO Console
 *(Здесь должен быть скриншот `.dvc/config` и MinIO Console на http://localhost:9001)*
 
+**Примечание:** Пошаговые инструкции по настройке remote storage см. в `docs/QUICKSTART.md` (Шаг 5.2).
+
 ### 1.3. Создание системы версионирования данных
 
-**Добавление данных в DVC:**
-```bash
-# Автоматически
-./scripts/data/track_data.sh data/raw/WineQT.csv
-
-# Вручную
-dvc add data/raw/WineQT.csv
-git add data/raw/WineQT.csv.dvc .gitignore
-git commit -m "data: add WineQT dataset"
-```
-
-**Python API:**
-```python
-from src.data_science_project import dvc_utils
-dvc_utils.track_data("data/raw/WineQT.csv")
-dvc_utils.pull_data(remote="minio")
-dvc_utils.push_data(remote="minio")
-```
+Данные версионируются через DVC. Исходный датасет `data/raw/WineQT.csv` добавлен в DVC (создан файл `data/raw/WineQT.csv.dvc`). Для автоматизации созданы:
+- Скрипт: `scripts/data/track_data.sh`
+- Python API: `src/data_science_project/dvc_utils.py` с функциями `track_data()`, `pull_data()`, `push_data()`
 
 **Скриншот:** Структура .dvc файлов для данных
 *(Здесь должен быть скриншот содержимого `data/raw/WineQT.csv.dvc`)*
 
+**Примечание:** Пошаговые инструкции по добавлению данных в DVC см. в `docs/QUICKSTART.md` (Шаг 6.1).
+
 ### 1.4. Настройка автоматического создания версий
 
-**DVC Pipeline (`dvc.yaml`):**
-```yaml
-stages:
-  prepare_data:
-    cmd: python scripts/data/prepare_data.py
-    deps:
-      - data/raw/WineQT.csv
-    outs:
-      - data/processed/train.csv
-      - data/processed/test.csv
-```
-
-**Запуск:**
-```bash
-dvc repro prepare_data
-```
+DVC Pipeline настроен в `dvc.yaml` с пятью стадиями: `prepare_data`, `validate_data`, `train_model`, `evaluate_model`, `monitor_pipeline`. Pipeline автоматически создает версии выходных файлов при выполнении команд `dvc repro`.
 
 **Скриншот:** Результат выполнения DVC pipeline
 *(Здесь должен быть скриншот вывода `dvc repro`)*
+
+**Примечание:** Пошаговые инструкции по запуску pipeline см. в `docs/QUICKSTART.md` (Шаг 6.2, 13).
 
 ## 2. Настройка выбранного инструмента для моделей (3 балла)
 
 ### 2.1. Настройка DVC для моделей
 
-Модели версионируются аналогично данным:
-```bash
-dvc add models/model.pkl
-```
+Модели версионируются через DVC аналогично данным. Модель `models/model.pkl` создается и версионируется автоматически в стадии `train_model` DVC pipeline.
 
 **Скриншот:** Структура .dvc файлов для моделей
 *(Здесь должен быть скриншот содержимого `models/model.pkl.dvc`)*
 
 ### 2.2. Создание системы версионирования моделей
 
-**Добавление модели:**
-```bash
-./scripts/data/track_model.sh models/model.pkl reports/metrics/model_metrics.json
-```
-
-**Версионирование метрик:**
-```yaml
-stages:
-  train_model:
-    outs:
-      - models/model.pkl
-    metrics:
-      - reports/metrics/model_metrics.json
-```
+Модели версионируются в стадии `train_model` DVC pipeline. Метрики модели (`reports/metrics/model_metrics.json`) также версионируются автоматически. Для ручного добавления моделей создан скрипт `scripts/data/track_model.sh` и Python API `dvc_utils.track_model()`.
 
 **Скриншот:** Версионирование метрик модели
 *(Здесь должен быть скриншот вывода `dvc metrics show`)*
@@ -146,25 +97,11 @@ stages:
 
 ### 2.4. Создание системы сравнения версий
 
-**Сравнение файлов:**
-```bash
-dvc diff models/model.pkl HEAD~1 HEAD
-```
-
-**Сравнение метрик:**
-```bash
-dvc metrics diff reports/metrics/model_metrics.json
-```
-
-**Сравнение параметров:**
-```bash
-dvc params diff
-```
-
-**Python API:**
-```python
-comparison = dvc_utils.compare_versions("models/model.pkl", "HEAD~1", "HEAD")
-```
+Реализована система сравнения версий:
+- Сравнение файлов: `dvc diff`
+- Сравнение метрик: `dvc metrics diff`
+- Сравнение параметров: `dvc params diff`
+- Python API: `dvc_utils.compare_versions()`
 
 **Скриншот:** Результаты сравнения версий
 *(Здесь должен быть скриншот вывода `dvc diff` и `dvc metrics diff`)*
@@ -173,35 +110,17 @@ comparison = dvc_utils.compare_versions("models/model.pkl", "HEAD~1", "HEAD")
 
 ### 3.1. Инструкции по воспроизведению
 
-Созданы инструкции по воспроизведению проекта:
-
-**Основные шаги:**
-1. Клонировать репозиторий и установить зависимости
-2. Инициализировать DVC: `dvc init --no-scm`
-3. Настроить remote storage (Local, MinIO или S3)
-4. Загрузить данные: `dvc pull`
-5. Воспроизвести pipeline: `dvc repro`
-
-**Настройка MinIO:**
-```bash
-docker compose up -d minio
-./scripts/setup/setup_minio.sh
-```
-
-**Воспроизведение pipeline:**
-```bash
-# Очистка результатов
-rm -rf data/processed/* models/* reports/metrics/*
-
-# Воспроизведение
-dvc repro
-
-# Проверка
-ls -lh models/ reports/metrics/
-```
+Созданы подробные инструкции по воспроизведению проекта в `docs/QUICKSTART.md` (Шаг 5-13). Инструкции включают:
+- Инициализацию DVC
+- Настройку remote storage (Local, MinIO, S3)
+- Загрузку данных через `dvc pull`
+- Воспроизведение pipeline через `dvc repro`
+- Настройку MinIO через docker-compose
 
 **Скриншот:** Инструкции по воспроизведению
 *(Здесь должен быть скриншот успешного выполнения `dvc repro`)*
+
+**Примечание:** Полные пошаговые инструкции см. в `docs/QUICKSTART.md`.
 
 ### 3.2. Фиксация версий зависимостей
 
@@ -215,33 +134,14 @@ ls -lh models/ reports/metrics/
 
 ### 3.3. Тестирование воспроизводимости
 
-**Тест полного pipeline:**
-```bash
-# Очистка результатов
-dvc remove models/model.pkl.dvc
-rm -rf data/processed/* models/* reports/metrics/*
-
-# Воспроизведение
-dvc repro
-
-# Проверка
-ls -lh models/ reports/metrics/
-```
+Протестирована воспроизводимость полного pipeline. После очистки результатов (`data/processed/*`, `models/*`, `reports/metrics/*`) pipeline успешно воспроизводится через `dvc repro`, создавая все необходимые файлы и метрики.
 
 **Скриншот:** Результаты тестирования воспроизводимости
 *(Здесь должен быть скриншот успешного выполнения `dvc repro`)*
 
 ### 3.4. Docker контейнер
 
-**Dockerfile обновлен:**
-```dockerfile
-RUN dvc init --no-scm || true
-```
-
-**Запуск с MinIO:**
-```bash
-docker compose up -d
-```
+Dockerfile обновлен для поддержки DVC (инициализация DVC в образе). MinIO интегрирован в docker-compose для автоматического запуска вместе с проектом.
 
 **Скриншот:** Успешная сборка Docker образа с DVC
 *(Здесь должен быть скриншот вывода `docker compose up`)*
