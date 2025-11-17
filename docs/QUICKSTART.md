@@ -45,15 +45,13 @@ pip install poetry
 ### Вариант A: Автоматическая настройка (рекомендуется)
 
 ```bash
-# Запустить скрипт автоматической настройки
+# Запустить скрипт автоматической настройки (если существует)
 ./scripts/setup/setup.sh
+
+# Или выполнить шаги вручную (см. Вариант B)
 ```
 
-Скрипт автоматически:
-- Проверит наличие Poetry
-- Установит все зависимости
-- Настроит pre-commit hooks
-- Создаст виртуальное окружение
+**Примечание:** Скрипт `setup.sh` может отсутствовать. В этом случае используйте Вариант B.
 
 ### Вариант B: Ручная установка
 
@@ -123,8 +121,8 @@ docker compose ps minio
 **Шаг 2:** Настройка DVC для MinIO:
 
 ```bash
-# Автоматическая настройка
-./scripts/setup/setup_minio.sh
+# Автоматическая настройка (если скрипт существует)
+# ./scripts/setup/setup_minio.sh
 
 # Или вручную:
 poetry run dvc remote add minio s3://engineering-practices-ml/dvc
@@ -176,8 +174,8 @@ cat .dvc/config
 ### 6.1. Добавление исходных данных в DVC
 
 ```bash
-# Автоматически через скрипт
-./scripts/data/track_data.sh data/raw/WineQT.csv
+# Автоматически через скрипт (если существует)
+# ./scripts/data/track_data.sh data/raw/WineQT.csv
 
 # Или вручную
 poetry run dvc add data/raw/WineQT.csv
@@ -309,7 +307,7 @@ cat reports/plots/confusion_matrix.json
 poetry run dvc repro monitor_pipeline
 
 # Или запуск полного пайплайна с мониторингом
-python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 ```
 
 **Ожидаемый результат:**
@@ -324,7 +322,7 @@ python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --moni
 cat reports/monitoring/pipeline_report.json
 
 # Или через Python
-python -c "
+poetry run python -c "
 import json
 from pathlib import Path
 report = json.load(open('reports/monitoring/pipeline_report.json'))
@@ -342,10 +340,10 @@ print('Статус:', report['summary'])
 
 ```bash
 # Запуск всего пайплайна с автоматическим мониторингом
-python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 
 # Запуск конкретных стадий
-python scripts/pipeline/run_pipeline.py \
+poetry run python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor \
   --stages prepare_data validate_data train_model
@@ -405,9 +403,10 @@ poetry run dvc pull --remote minio
 ### 12.1. Настройка системы экспериментов
 
 ```bash
-# Автоматическая настройка
-./scripts/setup/setup_experiments.sh
+# Автоматическая настройка (если скрипт существует)
+# ./scripts/setup/setup_experiments.sh
 
+# Или вручную - конфигурации экспериментов создаются при первом запуске
 # Это создаст:
 # - Конфигурации экспериментов в config/experiments/
 # - Необходимые директории
@@ -417,10 +416,10 @@ poetry run dvc pull --remote minio
 
 ```bash
 # Запуск всех 26 экспериментов
-python scripts/experiments/run_all_experiments.py
+poetry run python scripts/experiments/run_all_experiments.py
 
 # Или запуск одного эксперимента
-python scripts/experiments/run_experiment.py \
+poetry run python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 ```
@@ -429,24 +428,24 @@ python scripts/experiments/run_experiment.py \
 
 ```bash
 # Список всех экспериментов
-python scripts/experiments/compare_experiments.py --list
+poetry run python scripts/experiments/compare_experiments.py --list
 
 # Сравнение двух экспериментов
-python scripts/experiments/compare_experiments.py \
+poetry run python scripts/experiments/compare_experiments.py \
   --compare exp_001_linear exp_002_ridge_1.0
 
 # Фильтрация по модели
-python scripts/experiments/compare_experiments.py --filter-model rf
+poetry run python scripts/experiments/compare_experiments.py --filter-model rf
 
 # Фильтрация по метрикам
-python scripts/experiments/compare_experiments.py \
+poetry run python scripts/experiments/compare_experiments.py \
   --min-r2 0.5 --max-rmse 0.8
 
 # Поиск экспериментов
-python scripts/experiments/compare_experiments.py --search ridge
+poetry run python scripts/experiments/compare_experiments.py --search ridge
 
 # Экспорт в CSV
-python scripts/experiments/compare_experiments.py --export experiments.csv
+poetry run python scripts/experiments/compare_experiments.py --export experiments.csv
 ```
 
 ### 12.4. Использование Python API для экспериментов
@@ -761,6 +760,112 @@ poetry run dvc repro train_model
 poetry run dvc commit -f
 ```
 
+### Проблема 7: ClearML Server не запускается
+
+**Ошибка:** `Container clearml-server is unhealthy` или `dependency failed to start: container clearml-server is unhealthy`
+
+**Причина:** Healthcheck для `clearml-server` проверял корневой путь `/`, который возвращает 400 (сервер работает, но endpoint неверный).
+
+**Решение:**
+```bash
+# Проверка статуса всех сервисов
+docker compose ps
+
+# Просмотр логов конкретного сервиса
+docker compose logs clearml-server
+docker compose logs clearml-webserver
+docker compose logs clearml-mongo
+docker compose logs clearml-elastic
+docker compose logs clearml-redis
+
+# Если сервер показывает "unhealthy", но работает (возвращает HTTP коды):
+# Healthcheck был исправлен в docker-compose.yml
+# Просто перезапустите сервер:
+docker compose up -d --force-recreate clearml-server
+
+# Перезапуск всех сервисов ClearML
+docker compose restart clearml-mongo clearml-elastic clearml-redis clearml-server clearml-webserver
+
+# Полная переустановка
+docker compose down -v
+docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-webserver
+
+# Ожидание готовности (может занять 1-2 минуты)
+sleep 60
+curl http://localhost:8080
+curl http://localhost:8008
+```
+
+**Важно:**
+- Убедитесь, что все зависимые сервисы (MongoDB, Elasticsearch, Redis) запущены перед запуском API Server.
+- Если `clearml-server` показывает "unhealthy", но сервер отвечает на запросы (возвращает HTTP коды 400/404), это нормально - сервер работает, просто healthcheck был настроен неправильно. В текущей версии `docker-compose.yml` healthcheck исправлен.
+
+### Проблема 8: ClearML не может подключиться к серверу
+
+**Ошибка:** `Failed to connect to ClearML server`
+
+**Решение:**
+```bash
+# Проверьте, что все сервисы запущены
+docker compose ps
+
+# Убедитесь, что API Server и Web UI работают
+# API Server может возвращать 400 для корневого пути - это нормально
+curl http://localhost:8008
+curl http://localhost:8080
+
+# Проверьте логи на наличие ошибок
+docker compose logs clearml-server | tail -50
+
+# Если сервер показывает "unhealthy", но отвечает на запросы:
+# Это может быть проблема с healthcheck (исправлено в docker-compose.yml)
+# Попробуйте перезапустить:
+docker compose up -d --force-recreate clearml-server
+
+# Проверьте credentials
+poetry run clearml-init
+
+# Или установите переменные окружения
+export CLEARML_API_HOST=http://localhost:8008
+export CLEARML_WEB_HOST=http://localhost:8080
+export CLEARML_API_ACCESS_KEY=<your-key>
+export CLEARML_API_SECRET_KEY=<your-key>
+```
+
+**Примечание:**
+- Если Elasticsearch не запускается из-за нехватки памяти, увеличьте лимит памяти в `docker-compose.yml` или уменьшите `ES_JAVA_OPTS`.
+- Если `clearml-server` возвращает HTTP 400 для корневого пути `/`, это нормально - сервер работает, просто этот endpoint не поддерживается. Healthcheck в `docker-compose.yml` настроен правильно и проверяет, что сервер отвечает (любой HTTP код).
+
+### Проблема 9: "Invalid user id (protected identity)" при создании credentials
+
+**Ошибка:** `Invalid user id (protected identity)` при попытке создать credentials в ClearML
+
+**Причина:**
+При первом запуске ClearML Server автоматически создается системный пользователь `__allegroai__`. Credentials можно создавать только для обычных пользовательских аккаунтов, не для системных.
+
+**Решение:**
+1. Откройте http://localhost:8080
+2. Убедитесь, что вы **не** вошли в системный аккаунт `__allegroai__`
+3. Если видите системного пользователя, выйдите из аккаунта
+4. Создайте **новый пользовательский аккаунт**:
+   - Нажмите "Sign Up" или "Create Account"
+   - Заполните форму регистрации (email, пароль, имя)
+   - Подтвердите регистрацию
+5. Войдите в созданный аккаунт
+6. Перейдите в **Settings > Workspace > Create new credentials**
+7. Теперь credentials должны создаться успешно
+
+**Проверка:**
+```bash
+# После создания credentials, проверьте их:
+poetry run clearml-init
+
+# Или установите переменные окружения:
+export CLEARML_API_HOST=http://localhost:8008
+export CLEARML_API_SECRET_KEY=<your-secret-key>
+export CLEARML_API_ACCESS_KEY=<your-access-key>
+```
+
 ## Полезные команды
 
 ### DVC
@@ -877,6 +982,9 @@ cat reports/monitoring/pipeline_report.json
 
 # 8. Проверка Pydantic моделей
 poetry run python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
+
+# 9. Проверка ClearML (если настроен)
+poetry run python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; print('✅ ClearML OK')" 2>/dev/null || echo "⚠️ ClearML не настроен (опционально)"
 ```
 
 ## Следующие шаги
@@ -889,18 +997,268 @@ poetry run python -c "from src.data_science_project.config_models import Trainin
    - `docs/homework_2/REPORT.md` - версионирование данных и моделей
    - `docs/homework_3/REPORT.md` - трекинг экспериментов
    - `docs/homework_4/REPORT.md` - автоматизация ML пайплайнов
+   - `docs/homework_5/REPORT.md` - ClearML для MLOps
 
 2. **Начните работу:**
    - Запустите полный pipeline: `poetry run dvc repro`
-   - Запустите с мониторингом: `python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor`
-   - Попробуйте разные модели: `poetry run dvc repro train_model -S model_type=ridge`
-   - Проведите эксперименты: `python scripts/experiments/run_all_experiments.py`
-   - Изучите результаты: `python scripts/experiments/compare_experiments.py --list`
+   - Запустите с мониторингом: `poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor`
+   - Попробуйте разные модели: `poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge`
+   - Проведите эксперименты: `poetry run python scripts/experiments/run_all_experiments.py`
+   - Изучите результаты: `poetry run python scripts/experiments/compare_experiments.py --list`
    - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json`
+   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `poetry run python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge`
 
 3. **Настройте CI/CD:**
    - GitHub Actions уже настроен в `.github/workflows/ci.yml`
    - При push в `main` или `develop` автоматически запускаются проверки
+
+## Шаг 17: Работа с ClearML (ДЗ 5)
+
+### 17.1. Запуск ClearML Server
+
+ClearML Server состоит из нескольких сервисов:
+- MongoDB - база данных
+- Elasticsearch - поиск и индексация
+- Redis - кэширование
+- API Server - API сервер (порт 8008)
+- File Server - файловый сервер для артефактов (порт 8081)
+- Web UI - веб-интерфейс (порт 8080)
+
+```bash
+# Запуск всех сервисов ClearML
+docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-fileserver clearml-webserver
+
+# Или запуск всех сервисов сразу
+docker compose up -d
+
+# Проверка статуса
+docker compose ps
+
+# Просмотр логов
+docker compose logs -f clearml-server
+docker compose logs -f clearml-webserver
+
+# ClearML Web UI: http://localhost:8080
+# ClearML API: http://localhost:8008
+# ClearML File Server: http://localhost:8081
+# MongoDB: mongodb://localhost:27017
+# Redis: redis://localhost:6379
+# Elasticsearch: http://localhost:9200
+# Transport-порт Elasticsearch: 9300 (для внешних агентов)
+# Примеры проверок:
+#   curl http://localhost:9200/_cluster/health?pretty
+#   mongo --host localhost --eval "db.runCommand({ping:1})"
+#   redis-cli -h localhost ping
+```
+
+**Примечание:**
+- Первый запуск может занять 1-2 минуты для инициализации всех сервисов.
+- Если `clearml-server` показывает статус "unhealthy" при первом запуске, подождите 1-2 минуты - серверу нужно время для инициализации. Healthcheck настроен с `start_period: 90s` для учета времени запуска.
+- Если проблема сохраняется, проверьте логи: `docker compose logs clearml-server | tail -50`
+
+### 17.2. Настройка credentials
+
+**Важно:** При первом запуске ClearML Server создается системный пользователь `__allegroai__`. Для работы нужно создать обычного пользователя.
+
+1. Откройте http://localhost:8080
+2. **Создайте новый аккаунт** (не используйте системный пользователь):
+   - Нажмите "Sign Up" или "Create Account"
+   - Заполните форму регистрации (email, пароль, имя)
+   - Подтвердите регистрацию
+3. Войдите в созданный аккаунт
+4. Перейдите в **Settings > Workspace > Create new credentials**
+5. Скопируйте **Access Key** и **Secret Key**
+
+**Если возникает ошибка "Invalid user id (protected identity)":**
+- Убедитесь, что вы вошли в обычный пользовательский аккаунт (не системный)
+- Если вы видите системного пользователя `__allegroai__`, создайте новый аккаунт через "Sign Up"
+- Credentials можно создавать только для обычных пользователей, не для системных
+
+### 17.3. Подготовка шаблонов задач для пайплайна
+
+`scripts/clearml/ml_pipeline.py` использует существующие шаблонные задачи (`base_task_name`). Их нужно создать один раз (из корня репозитория):
+
+```bash
+PROJECT="Engineering Practices ML"
+
+# 1. Подготовка данных
+poetry run clearml-task create \
+  --project "$PROJECT" \
+  --name "prepare_data_template" \
+  --script scripts/data/prepare_data.py \
+  --working-directory . \
+  --task-type data_processing \
+  --queue default
+
+# 2. Валидация данных
+poetry run clearml-task create \
+  --project "$PROJECT" \
+  --name "validate_data_template" \
+  --script scripts/data/validate_data.py \
+  --working-directory . \
+  --task-type data_processing \
+  --queue default
+
+# 3. Обучение модели
+poetry run clearml-task create \
+  --project "$PROJECT" \
+  --name "train_model_template" \
+  --script scripts/clearml/train_with_clearml.py \
+  --working-directory . \
+  --task-type training \
+  --queue default
+
+# 4. Оценка модели
+poetry run clearml-task create \
+  --project "$PROJECT" \
+  --name "evaluate_model_template" \
+  --script scripts/models/evaluate_model.py \
+  --working-directory . \
+  --task-type testing \
+  --queue default
+```
+
+Проверка:
+
+```bash
+poetry run python scripts/clearml/compare_experiments.py --list --limit 10
+```
+
+Шаблонные задачи должны появиться в UI проекта. При желании их можно создать вручную в веб-интерфейсе (Create Task → Scripts → указать файл → Save as template) — главное, чтобы названия совпадали.
+
+### 17.4. Инициализация ClearML
+
+**Важно:** Перед инициализацией убедитесь, что вы получили credentials (см. раздел 17.2).
+
+```bash
+# Через скрипт (с указанием credentials)
+poetry run python scripts/clearml/init_clearml.py \
+  --api-host http://localhost:8008 \
+  --web-host http://localhost:8080 \
+  --access-key <your-access-key> \
+  --secret-key <your-secret-key>
+
+# Или через переменные окружения
+export CLEARML_API_HOST=http://localhost:8008
+export CLEARML_WEB_HOST=http://localhost:8080
+export CLEARML_API_ACCESS_KEY=<your-access-key>
+export CLEARML_API_SECRET_KEY=<your-secret-key>
+poetry run clearml-init
+
+# Или запустите скрипт без параметров - он покажет инструкции
+poetry run python scripts/clearml/init_clearml.py
+```
+
+**Проверка инициализации:**
+```bash
+# Проверьте, что ClearML может подключиться
+poetry run python -c "from clearml import Task; print('✅ ClearML подключен')"
+```
+
+### 17.5. Запуск эксперимента с трекингом
+
+```bash
+# Обучение модели с трекингом
+poetry run python scripts/clearml/train_with_clearml.py \
+  --config config/train_params.yaml \
+  --model-type ridge \
+  --experiment-name ridge_experiment_001
+```
+
+**Примечание:** Если в конце выполнения появляются ошибки подключения (Connection refused), убедитесь, что `clearml-fileserver` запущен: `docker compose up -d clearml-fileserver`. Fileserver необходим для загрузки артефактов (модели, метрики) в ClearML. После запуска fileserver ошибки должны исчезнуть.
+
+### 17.6. Сравнение экспериментов
+
+```bash
+# Список экспериментов
+poetry run python scripts/clearml/compare_experiments.py --list
+
+# Сравнение
+poetry run python scripts/clearml/compare_experiments.py \
+  --compare <task_id_1> <task_id_2>
+```
+
+### 17.7. Управление моделями
+
+```bash
+# Список моделей
+poetry run python scripts/clearml/manage_models.py --list
+
+# Регистрация модели
+poetry run python scripts/clearml/manage_models.py \
+  --register models/model.pkl \
+  --name wine_quality_model
+```
+
+### 17.8. Запуск пайплайна
+
+```bash
+# Создание и запуск пайплайна
+poetry run python scripts/clearml/ml_pipeline.py \
+  --model-type rf \
+  --queue default
+```
+
+### 17.9. Использование Python API для ClearML
+
+```python
+from src.data_science_project.clearml_tracker import ClearMLTracker
+
+# Создание трекера
+tracker = ClearMLTracker(
+    project_name="Engineering Practices ML",
+    task_name="my_experiment",
+    tags=["ridge", "training"]
+)
+
+# Логирование параметров
+tracker.log_params({"alpha": 1.0, "max_depth": 10})
+
+# Логирование метрик
+tracker.log_metrics({"test_r2": 0.85, "test_rmse": 0.5})
+
+# Регистрация модели
+tracker.log_model(
+    model_path="models/model.pkl",
+    model_name="wine_quality_model",
+    metadata={"version": "1.0.0"}
+)
+
+# Закрытие задачи
+tracker.close()
+```
+
+### 17.10. Просмотр экспериментов в веб-интерфейсе
+
+После запуска экспериментов:
+1. Откройте http://localhost:8080
+2. Перейдите в проект "Engineering Practices ML"
+3. Просмотрите список экспериментов
+4. Откройте конкретный эксперимент для просмотра метрик, параметров и артефактов
+
+### 17.11. Настройка уведомлений
+
+ClearML поддерживает уведомления через Slack, Email и Webhooks. Пример настройки Slack:
+
+1. Создайте Slack Incoming Webhook и скопируйте URL.
+2. В ClearML UI перейдите в Settings → Workspace → Notifications → Add Rule.
+3. Выберите `Slack`, вставьте URL, включите события (например, Task completed/failed, Pipeline failed).
+4. Добавьте секцию в `~/.clearml/clearml.conf`, чтобы CLI также отправлял уведомления:
+
+```ini
+notifications {
+    slack {
+        url = "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+        channel = "#mlops-alerts"
+        notify_failed = true
+        notify_completed = true
+    }
+}
+```
+
+После этого все задачи и пайплайны будут автоматически слать уведомления в выбранный канал. Аналогично можно добавить email или webhook.
+
+Подробнее см. `docs/homework_5/REPORT.md` и `docs/homework_5/screenshots/README.md`
 
 ## Получение помощи
 
@@ -908,6 +1266,7 @@ poetry run python -c "from src.data_science_project.config_models import Trainin
 - **GitHub Issues:** создайте issue в репозитории
 - **DVC документация:** https://dvc.org/doc
 - **Poetry документация:** https://python-poetry.org/docs/
+- **ClearML документация:** https://clear.ml/docs
 
 ## Важные замечания
 
@@ -920,6 +1279,9 @@ poetry run python -c "from src.data_science_project.config_models import Trainin
 7. **Конфигурации валидируются через Pydantic** - проверяйте корректность параметров в `config/train_params.yaml`
 8. **Мониторинг пайплайна** автоматически сохраняет отчеты в `reports/monitoring/`
 9. **Параллельное выполнение** доступно через `dvc repro --jobs N` для независимых стадий
+10. **ClearML Server** должен быть запущен перед использованием ClearML: `docker compose up -d clearml-server`
+11. **ClearML credentials** настраиваются через веб-интерфейс (http://localhost:8080) или переменные окружения
+12. **Для ClearML** используйте `poetry run python scripts/clearml/` для всех скриптов
 
 ---
 

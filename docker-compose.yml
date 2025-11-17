@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   minio:
     image: minio/minio:latest
@@ -22,6 +20,165 @@ services:
     networks:
       - ml-network
 
+  # ClearML Server - MongoDB
+  clearml-mongo:
+    image: mongo:5.0
+    container_name: clearml-mongo
+    volumes:
+      - clearml_mongo:/data/db
+    ports:
+      - "27017:27017"  # MongoDB
+    networks:
+      - ml-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ClearML Server - Elasticsearch
+  clearml-elastic:
+    image: elasticsearch:7.17.10
+    container_name: clearml-elastic
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - clearml_elastic:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"   # Elasticsearch HTTP
+      - "9300:9300"   # Elasticsearch transport
+    networks:
+      - ml-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ClearML Server - Redis
+  clearml-redis:
+    image: redis:7-alpine
+    container_name: clearml-redis
+    volumes:
+      - clearml_redis:/data
+    ports:
+      - "6379:6379"  # Redis
+    networks:
+      - ml-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ClearML Server - API Server
+  clearml-server:
+    image: clearml/server:latest
+    container_name: clearml-server
+    command: apiserver
+    restart: unless-stopped
+    ports:
+      - "8008:8008"  # ClearML API
+    volumes:
+      - clearml_data:/opt/clearml/data
+      - clearml_logs:/var/log/clearml
+      - clearml_config:/opt/clearml/config
+      - clearml_fileserver:/mnt/fileserver
+    environment:
+      - CLEARML_ELASTIC_SERVICE_HOST=clearml-elastic
+      - CLEARML_ELASTIC_SERVICE_PORT=9200
+      - CLEARML_MONGODB_SERVICE_HOST=clearml-mongo
+      - CLEARML_MONGODB_SERVICE_PORT=27017
+      - CLEARML_REDIS_SERVICE_HOST=clearml-redis
+      - CLEARML_REDIS_SERVICE_PORT=6379
+      - CLEARML_SERVER_DEPLOYMENT_TYPE=linux
+      - CLEARML__apiserver__pre_populate__enabled=true
+    depends_on:
+      clearml-mongo:
+        condition: service_healthy
+      clearml-elastic:
+        condition: service_healthy
+      clearml-redis:
+        condition: service_healthy
+    networks:
+      ml-network:
+        aliases:
+          - apiserver
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8008 | grep -q '[0-9]' || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 90s
+
+  # ClearML Server - File Server
+  clearml-fileserver:
+    image: clearml/server:latest
+    container_name: clearml-fileserver
+    command: fileserver
+    restart: unless-stopped
+    ports:
+      - "8081:8081"  # ClearML File Server
+    volumes:
+      - clearml_data:/opt/clearml/data
+      - clearml_logs:/var/log/clearml
+      - clearml_fileserver:/mnt/fileserver
+    environment:
+      - CLEARML_MONGODB_SERVICE_HOST=clearml-mongo
+      - CLEARML_MONGODB_SERVICE_PORT=27017
+      - CLEARML_REDIS_SERVICE_HOST=clearml-redis
+      - CLEARML_REDIS_SERVICE_PORT=6379
+    depends_on:
+      clearml-mongo:
+        condition: service_healthy
+      clearml-redis:
+        condition: service_healthy
+      clearml-server:
+        condition: service_healthy
+    networks:
+      ml-network:
+        aliases:
+          - fileserver
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8081 | grep -q '[0-9]' || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+
+  # ClearML Server - Web UI
+  clearml-webserver:
+    image: clearml/server:latest
+    container_name: clearml-webserver
+    command: webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"  # ClearML Web UI (container listens on 80)
+    volumes:
+      - clearml_data:/opt/clearml/data
+      - clearml_logs:/var/log/clearml
+    environment:
+      - CLEARML_API_HOST=clearml-server:8008
+      - CLEARML_APISERVER_SERVICE_HOST=clearml-server
+      - CLEARML_APISERVER_SERVICE_PORT=8008
+      - NGINX_FILESERVER_ADDRESS=http://clearml-fileserver:8081
+    depends_on:
+      clearml-server:
+        condition: service_healthy
+      clearml-fileserver:
+        condition: service_healthy
+    networks:
+      - ml-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+
   ml-project:
     build:
       context: .
@@ -29,6 +186,10 @@ services:
     container_name: engineering-practices-ml
     depends_on:
       minio:
+        condition: service_healthy
+      clearml-webserver:
+        condition: service_healthy
+      clearml-fileserver:
         condition: service_healthy
     volumes:
       - ./data:/app/data
@@ -42,12 +203,28 @@ services:
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
+      - CLEARML_API_HOST=http://clearml-server:8008
+      - CLEARML_WEB_HOST=http://clearml-webserver:8080
     command: python main.py
     networks:
       - ml-network
 
 volumes:
   minio_data:
+    driver: local
+  clearml_data:
+    driver: local
+  clearml_logs:
+    driver: local
+  clearml_elastic:
+    driver: local
+  clearml_mongo:
+    driver: local
+  clearml_redis:
+    driver: local
+  clearml_config:
+    driver: local
+  clearml_fileserver:
     driver: local
 
 networks:
