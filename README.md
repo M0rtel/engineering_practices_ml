@@ -34,7 +34,8 @@ engineering_practices_ml/
 │   ├── data/         # Скрипты для работы с данными
 │   ├── models/       # Скрипты для моделей
 │   ├── experiments/  # Скрипты для экспериментов
-│   └── pipeline/     # Скрипты для пайплайнов
+│   ├── pipeline/     # Скрипты для пайплайнов
+│   └── clearml/      # Скрипты для ClearML
 ├── config/           # Конфигурационные файлы
 ├── params.yaml       # Параметры DVC pipeline
 ├── dvc.yaml          # Конфигурация DVC pipeline
@@ -126,7 +127,23 @@ poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=
 poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 ```
 
-Подробнее см. `docs/QUICKSTART.md`
+### Запуск экспериментов с ClearML
+
+```bash
+# Обучение модели с трекингом в ClearML
+poetry run python scripts/clearml/train_with_clearml.py \
+  --config config/train_params.yaml \
+  --model-type ridge \
+  --experiment-name ridge_experiment_001
+
+# Сравнение экспериментов
+poetry run python scripts/clearml/compare_experiments.py --list
+
+# Управление моделями
+poetry run python scripts/clearml/manage_models.py --list
+```
+
+Подробнее см. `docs/QUICKSTART.md` и `docs/homework_5/README.md`
 
 ### Форматирование кода
 
@@ -176,25 +193,36 @@ docker build -t engineering-practices-ml .
 docker run -it engineering-practices-ml
 ```
 
-### Запуск с MinIO (S3-совместимое хранилище)
+### Запуск с MinIO и ClearML
 
 ```bash
-# Запуск MinIO и проекта
-docker-compose up -d
+# Запуск всех сервисов (MinIO, ClearML Server, проект)
+docker compose up -d
 
 # Просмотр логов
-docker-compose logs -f
+docker compose logs -f
 
 # Остановка
-docker-compose down
+docker compose down
 ```
 
-MinIO доступен по адресам:
+**MinIO:**
 - **API:** http://localhost:9000
 - **Console:** http://localhost:9001
 - **Credentials:** minioadmin / minioadmin
 
-Подробнее см. `docs/QUICKSTART.md` (раздел "Настройка DVC" и "Запуск с MinIO")
+**ClearML:**
+- **Web UI:** http://localhost:8080
+- **API:** http://localhost:8008
+- **File Server:** http://localhost:8081
+- **Сервисы:** MongoDB, Elasticsearch, Redis, API Server, File Server, Web UI
+- **Отладочные порты:** MongoDB `27017`, Redis `6379`, Elasticsearch `9200/9300` проброшены на хост для диагностики (через `mongo`, `redis-cli`, `curl http://localhost:9200/_cluster/health`)
+- **Перед запуском ClearML пайплайнов:** создайте шаблонные задачи (`prepare_data_template`, `validate_data_template`, `train_model_template`, `evaluate_model_template`) с помощью `poetry run clearml-task create ...`, как описано в `docs/QUICKSTART.md`
+- **Уведомления:** настройте, например, Slack Webhook (Settings → Workspace → Notifications) и добавьте параметры в `~/.clearml/clearml.conf`
+
+**Примечание:** ClearML Server состоит из нескольких сервисов. Первый запуск может занять 1-2 минуты для инициализации.
+
+Подробнее см. `docs/QUICKSTART.md` и `docs/homework_5/REPORT.md`
 
 ## Git Workflow
 
@@ -244,6 +272,7 @@ git checkout -b bugfix/fix-name
 ## Основные инструменты проекта
 
 - **DVC** - версионирование данных и моделей, оркестрация пайплайнов
+- **ClearML** - MLOps платформа для трекинга экспериментов и управления моделями
 - **Pydantic** - валидация и управление конфигурациями
 - **Poetry** - управление зависимостями
 - **MinIO** - S3-совместимое хранилище для DVC
@@ -258,6 +287,8 @@ git checkout -b bugfix/fix-name
 - `docs/homework_3/` - Домашнее задание 3: Трекинг экспериментов с DVC
   - `REPORT.md` - Отчет о проделанной работе
 - `docs/homework_4/` - Домашнее задание 4: Автоматизация ML пайплайнов
+  - `REPORT.md` - Отчет о проделанной работе
+- `docs/homework_5/` - Домашнее задание 5: ClearML для MLOps
   - `REPORT.md` - Отчет о проделанной работе
 - `docs/GIT_WORKFLOW.md` - Документация по Git workflow
 - `docs/QUICKSTART.md` - Руководство по быстрому старту
