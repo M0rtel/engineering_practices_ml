@@ -54,53 +54,16 @@ engineering_practices_ml/
 - Poetry (для управления зависимостями)
 - Docker (опционально, для контейнеризации)
 
-## Установка
+## Быстрый старт
 
-### 1. Установка Poetry
+Для пошаговой настройки проекта см. **`docs/QUICKSTART.md`** - полное руководство по установке и настройке всех компонентов.
 
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-Или через pip:
-```bash
-pip install poetry
-```
-
-### 2. Клонирование и установка зависимостей
-
-```bash
-# Клонировать репозиторий
-git clone <repository-url>
-cd engineering_practices_ml
-
-# Установить зависимости через Poetry
-poetry install
-
-# Активировать виртуальное окружение
-poetry shell
-```
-
-### 3. Альтернативная установка через pip
-
-```bash
-pip install -r requirements.txt
-```
-
-## Настройка pre-commit hooks
-
-После установки зависимостей настройте pre-commit hooks:
-
-```bash
-# Установить hooks
-poetry run pre-commit install
-
-# Или если используете pip
-pre-commit install
-
-# Запустить проверку всех файлов
-pre-commit run --all-files
-```
+**Краткая инструкция:**
+1. Клонировать репозиторий: `git clone <repository-url> && cd engineering_practices_ml`
+2. Установить Poetry (если не установлен): `curl -sSL https://install.python-poetry.org | python3 -`
+3. Установить зависимости: `poetry install`
+4. Активировать окружение: `poetry shell`
+5. Настроить pre-commit: `poetry run pre-commit install`
 
 ## Использование
 
@@ -277,21 +240,40 @@ git checkout -b bugfix/fix-name
 - **Poetry** - управление зависимостями
 - **MinIO** - S3-совместимое хранилище для DVC
 - **GitHub Actions** - CI/CD автоматизация
+- **MkDocs** - генерация и публикация документации
 
 ## Документация
 
-- `docs/homework_1/` - Домашнее задание 1: Настройка рабочего места Data Scientist
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_2/` - Домашнее задание 2: Версионирование данных и моделей с DVC
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_3/` - Домашнее задание 3: Трекинг экспериментов с DVC
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_4/` - Домашнее задание 4: Автоматизация ML пайплайнов
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_5/` - Домашнее задание 5: ClearML для MLOps
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/GIT_WORKFLOW.md` - Документация по Git workflow
-- `docs/QUICKSTART.md` - Руководство по быстрому старту
+Документация проекта доступна онлайн на [GitHub Pages](https://gorobets.github.io/engineering_practices_ml/).
+
+### Локальная документация
+
+Для просмотра документации локально:
+
+```bash
+# Сборка документации
+make docs-build
+
+# Запуск локального сервера
+make docs-serve
+# Откройте http://127.0.0.1:8000
+```
+
+### Структура документации
+
+- **Главная страница** - Обзор проекта и быстрый старт
+- **Quick Start Guide** (`docs/QUICKSTART.md`) - Полное руководство по настройке
+- **Deployment Guide** (`docs/DEPLOYMENT.md`) - Руководство по развертыванию
+- **Homework Reports:**
+  - `docs/homework_1/REPORT.md` - ДЗ 1: Настройка рабочего места Data Scientist
+  - `docs/homework_2/REPORT.md` - ДЗ 2: Версионирование данных и моделей с DVC
+  - `docs/homework_3/REPORT.md` - ДЗ 3: Трекинг экспериментов с DVC
+  - `docs/homework_4/REPORT.md` - ДЗ 4: Автоматизация ML пайплайнов
+  - `docs/homework_5/REPORT.md` - ДЗ 5: ClearML для MLOps
+  - `docs/homework_6/REPORT.md` - ДЗ 6: Документация и отчеты
+- **Experiment Reports** - Автоматически сгенерированные отчеты об экспериментах
+- **API Reference** - Справочник API для всех модулей
+- **Git Workflow** (`docs/GIT_WORKFLOW.md`) - Документация по Git workflow
 
 ## Автор
 

@@ -45,6 +45,26 @@ def run_all_experiments() -> None:
 
     print("✅ Все эксперименты завершены!")
 
+    # Генерируем отчет об экспериментах
+    try:
+        print("\n📊 Генерация отчета об экспериментах...")
+        from scripts.reports.generate_experiment_report import (  # noqa: E402
+            generate_markdown_report,
+            load_all_experiments,
+        )
+
+        experiments = load_all_experiments()
+        if experiments:
+            report_path = Path("reports/experiments/latest.md")
+            generate_markdown_report(
+                experiments, report_path, include_visualizations=True
+            )
+            print(f"✅ Отчет сохранен: {report_path}")
+        else:
+            print("⚠️  Эксперименты не найдены для генерации отчета")
+    except Exception as e:
+        print(f"⚠️  Ошибка при генерации отчета: {e}")
+
 
 if __name__ == "__main__":
     run_all_experiments()

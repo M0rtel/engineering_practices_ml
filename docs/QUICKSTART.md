@@ -175,7 +175,7 @@ cat .dvc/config
 
 ```bash
 # Автоматически через скрипт (если существует)
-# ./scripts/data/track_data.sh data/raw/WineQT.csv
+./scripts/data/track_data.sh data/raw/WineQT.csv
 
 # Или вручную
 poetry run dvc add data/raw/WineQT.csv
@@ -201,7 +201,7 @@ poetry run dvc dag
 - Созданы метрики: `reports/metrics/data_stats.json`
 - Создан plot: `reports/plots/data_distribution.json`
 
-**Примечание:** Скрипт использует Pydantic для валидации конфигурации из `config/train_params.yaml`.
+**Примечание:** Скрипт использует Pydantic для валидации конфигурации из `config/train_params.yaml`. Для запуска всего пайплайна сразу см. **Шаг 13: Запуск полного ML пайплайна**.
 
 ## Шаг 7: Валидация данных
 
@@ -338,22 +338,7 @@ print('Статус:', report['summary'])
 
 ### 10.3. Запуск полного пайплайна с мониторингом
 
-```bash
-# Запуск всего пайплайна с автоматическим мониторингом
-poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
-
-# Запуск конкретных стадий
-poetry run python scripts/pipeline/run_pipeline.py \
-  --config config/train_params.yaml \
-  --monitor \
-  --stages prepare_data validate_data train_model
-```
-
-**Преимущества:**
-- Автоматическое отслеживание всех стадий
-- Детальные отчеты о выполнении
-- Уведомления о завершении
-- Сохранение истории выполнения
+Для запуска полного пайплайна с мониторингом см. **Шаг 13.4: Запуск с мониторингом**.
 
 ## Шаг 11: Работа с remote storage
 
@@ -506,12 +491,11 @@ poetry run dvc repro --jobs 4
 
 ### 13.3. Запуск с изменением параметров
 
-```bash
-# Использование утилиты для изменения параметров
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+Для изменения параметров модели (например, `model_type`) см. **Шаг 8.2: Использование разных типов моделей**.
 
-# Изменение нескольких параметров
+**Дополнительные примеры:**
+```bash
+# Изменение нескольких параметров одновременно
 poetry run python scripts/pipeline/run_with_params.py train_model \
   -S model_type=ridge \
   -S enable_validation=true
@@ -529,12 +513,25 @@ poetry run python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 
+# Запуск конкретных стадий с мониторингом
+poetry run python scripts/pipeline/run_pipeline.py \
+  --config config/train_params.yaml \
+  --monitor \
+  --stages prepare_data validate_data train_model
+
 # Результат:
 # - Выполнение всех стадий
-# - Отслеживание времени выполнения
-# - Сохранение отчета мониторинга
+# - Отслеживание времени выполнения каждой стадии
+# - Сохранение отчета мониторинга в reports/monitoring/
 # - Уведомление о завершении
+# - Детальная сводка выполнения
 ```
+
+**Преимущества:**
+- Автоматическое отслеживание всех стадий
+- Детальные отчеты о выполнении
+- Уведомления о завершении
+- Сохранение истории выполнения
 
 ### 13.5. Просмотр графа зависимостей
 
@@ -1000,13 +997,13 @@ poetry run python -c "from src.data_science_project.clearml_tracker import Clear
    - `docs/homework_5/REPORT.md` - ClearML для MLOps
 
 2. **Начните работу:**
-   - Запустите полный pipeline: `poetry run dvc repro`
-   - Запустите с мониторингом: `poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor`
-   - Попробуйте разные модели: `poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge`
-   - Проведите эксперименты: `poetry run python scripts/experiments/run_all_experiments.py`
-   - Изучите результаты: `poetry run python scripts/experiments/compare_experiments.py --list`
-   - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json`
-   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `poetry run python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge`
+   - Запустите полный pipeline: `poetry run dvc repro` (см. Шаг 13)
+   - Запустите с мониторингом: `poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor` (см. Шаг 13.4)
+   - Попробуйте разные модели: `poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge` (см. Шаг 8.2)
+   - Проведите эксперименты: `poetry run python scripts/experiments/run_all_experiments.py` (см. Шаг 12)
+   - Изучите результаты: `poetry run python scripts/experiments/compare_experiments.py --list` (см. Шаг 12.3)
+   - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json` (см. Шаг 10.2)
+   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `poetry run python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge` (см. Шаг 17)
 
 3. **Настройте CI/CD:**
    - GitHub Actions уже настроен в `.github/workflows/ci.yml`
@@ -1279,7 +1276,7 @@ notifications {
 7. **Конфигурации валидируются через Pydantic** - проверяйте корректность параметров в `config/train_params.yaml`
 8. **Мониторинг пайплайна** автоматически сохраняет отчеты в `reports/monitoring/`
 9. **Параллельное выполнение** доступно через `dvc repro --jobs N` для независимых стадий
-10. **ClearML Server** должен быть запущен перед использованием ClearML: `docker compose up -d clearml-server`
+10. **ClearML Server** должен быть запущен перед использованием ClearML: `docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-fileserver clearml-webserver` (см. Шаг 17.1)
 11. **ClearML credentials** настраиваются через веб-интерфейс (http://localhost:8080) или переменные окружения
 12. **Для ClearML** используйте `poetry run python scripts/clearml/` для всех скриптов
 
