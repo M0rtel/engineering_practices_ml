@@ -1,0 +1,84 @@
+site_name: Engineering Practices ML
+site_description: Data Science project with modern engineering practices
+site_author: Igor Gorobets
+site_url: https://gorobets.github.io/engineering_practices_ml/
+# Если репозиторий находится в другой организации, обновите URL выше
+
+repo_name: engineering_practices_ml
+repo_url: https://github.com/gorobets/engineering_practices_ml
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+  - mermaid2
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Quick Start: QUICKSTART.md
+  - Deployment: DEPLOYMENT.md
+  - Homework Reports:
+    - Homework 1: homework_1/REPORT.md
+    - Homework 2: homework_2/REPORT.md
+    - Homework 3: homework_3/REPORT.md
+    - Homework 4: homework_4/REPORT.md
+    - Homework 5: homework_5/REPORT.md
+    - Homework 6: homework_6/REPORT.md
+  - Experiment Reports:
+    - Overview: reports/experiments/README.md
+    - Latest Report: reports/experiments/latest.md
+  - API Reference:
+    - Experiment Tracker: api/experiment_tracker.md
+    - Config Models: api/config_models.md
+    - ClearML Tracker: api/clearml_tracker.md
+  - Git Workflow: GIT_WORKFLOW.md
+
+extra:
+  version:
+    provider: mike
