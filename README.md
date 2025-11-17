@@ -54,53 +54,16 @@ engineering_practices_ml/
 - Poetry (для управления зависимостями)
 - Docker (опционально, для контейнеризации)
 
-## Установка
+## Быстрый старт
 
-### 1. Установка Poetry
+Для пошаговой настройки проекта см. **`docs/QUICKSTART.md`** - полное руководство по установке и настройке всех компонентов.
 
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-Или через pip:
-```bash
-pip install poetry
-```
-
-### 2. Клонирование и установка зависимостей
-
-```bash
-# Клонировать репозиторий
-git clone <repository-url>
-cd engineering_practices_ml
-
-# Установить зависимости через Poetry
-poetry install
-
-# Активировать виртуальное окружение
-poetry shell
-```
-
-### 3. Альтернативная установка через pip
-
-```bash
-pip install -r requirements.txt
-```
-
-## Настройка pre-commit hooks
-
-После установки зависимостей настройте pre-commit hooks:
-
-```bash
-# Установить hooks
-poetry run pre-commit install
-
-# Или если используете pip
-pre-commit install
-
-# Запустить проверку всех файлов
-pre-commit run --all-files
-```
+**Краткая инструкция:**
+1. Клонировать репозиторий: `git clone <repository-url> && cd engineering_practices_ml`
+2. Установить Poetry (если не установлен): `curl -sSL https://install.python-poetry.org | python3 -`
+3. Установить зависимости: `poetry install`
+4. Активировать окружение: `poetry shell`
+5. Настроить pre-commit: `poetry run pre-commit install`
 
 ## Использование
 

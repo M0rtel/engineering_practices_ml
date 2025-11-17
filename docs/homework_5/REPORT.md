@@ -4,271 +4,72 @@
 
 Настроена комплексная MLOps платформа на базе ClearML для управления экспериментами, моделями и пайплайнами. Система интегрирована с существующим проектом и обеспечивает полный цикл управления ML workflow.
 
+> **Примечание:** Для получения пошаговых инструкций по настройке и использованию ClearML см. `docs/QUICKSTART.md` (Шаг 17). Данный отчет описывает **что было настроено**, а не **как это настроить**.
+
 ## 1. Настройка ClearML (3 балла)
 
 ### 1.1. Установка и настройка ClearML Server
 
-**Установка через Poetry:**
-```toml
-clearml = "^1.14.0"
-```
-
-**Настройка через docker-compose:**
-Добавлены сервисы ClearML Server в `docker-compose.yml`:
-
-- `clearml-mongo` - MongoDB база данных
-- `clearml-elastic` - Elasticsearch для поиска
-- `clearml-redis` - Redis для кэширования
-- `clearml-server` - API Server (порт 8008)
-- `clearml-fileserver` - File Server для артефактов (порт 8081)
-- `clearml-webserver` - Web UI (порт 8080)
-
-```yaml
-clearml-server:
-  image: clearml/server:latest
-  container_name: clearml-server
-  command: apiserver
-  ports:
-    - "8008:8008"  # ClearML API
-  environment:
-    - CLEARML_MONGODB_SERVICE_HOST=clearml-mongo
-    - CLEARML_ELASTIC_SERVICE_HOST=clearml-elastic
-    - CLEARML_REDIS_SERVICE_HOST=clearml-redis
-  healthcheck:
-    test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8008 | grep -q '[0-9]' || exit 1"]
-    interval: 30s
-    timeout: 20s
-    retries: 5
-    start_period: 90s
-  networks:
-    ml-network:
-      aliases:
-        - apiserver
-        - fileserver
-
-clearml-webserver:
-  image: clearml/server:latest
-  container_name: clearml-webserver
-  command: webserver
-  ports:
-    - "8080:80"  # ClearML Web UI (контейнер слушает на порту 80)
-  environment:
-    - CLEARML_API_HOST=clearml-server:8008
-    - CLEARML_APISERVER_SERVICE_HOST=clearml-server
-    - CLEARML_APISERVER_SERVICE_PORT=8008
-  depends_on:
-    clearml-server:
-      condition: service_healthy
-    clearml-fileserver:
-      condition: service_healthy
-
-clearml-fileserver:
-  image: clearml/server:latest
-  container_name: clearml-fileserver
-  command: fileserver
-  ports:
-    - "8081:8081"  # ClearML File Server
-  volumes:
-    - clearml_data:/opt/clearml/data
-    - clearml_logs:/var/log/clearml
-    - clearml_fileserver:/mnt/fileserver
-  environment:
-    - CLEARML_MONGODB_SERVICE_HOST=clearml-mongo
-    - CLEARML_MONGODB_SERVICE_PORT=27017
-    - CLEARML_REDIS_SERVICE_HOST=clearml-redis
-    - CLEARML_REDIS_SERVICE_PORT=6379
-  depends_on:
-    clearml-mongo:
-      condition: service_healthy
-    clearml-redis:
-      condition: service_healthy
-    clearml-server:
-      condition: service_healthy
-  networks:
-    ml-network:
-      aliases:
-        - fileserver
-  healthcheck:
-    test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8081 | grep -q '[0-9]' || exit 1"]
-    interval: 30s
-    timeout: 20s
-    retries: 5
-    start_period: 30s
-```
-
-**Примечания:**
-- Healthcheck для `clearml-server` проверяет, что сервер отвечает на запросы (любой HTTP код). Это необходимо, так как ClearML API Server возвращает 400 для корневого пути `/`, что является нормальным поведением - сервер работает, просто этот endpoint не поддерживается.
-- Healthcheck для `clearml-webserver` проверяет `http://localhost` (порт 80 внутри контейнера), так как nginx внутри контейнера слушает на порту 80, а не 8080. Порт 8080 пробрасывается с хоста на порт 80 контейнера (`8080:80`).
-- Healthcheck для `clearml-fileserver` проверяет, что сервер отвечает на запросы (любой HTTP код) на порту 8081.
-- Добавлен alias `apiserver` для сервиса `clearml-server` и alias `fileserver` для сервиса `clearml-fileserver` в сети, чтобы `clearml-webserver` мог найти их по имени.
-- `clearml-fileserver` необходим для загрузки артефактов (модели, метрики) в ClearML. Без него будут появляться ошибки подключения при попытке загрузить артефакты.
-
-**Запуск сервера:**
-```bash
-# Запуск всех сервисов ClearML
-docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-fileserver clearml-webserver
-
-# Или запуск всех сервисов сразу
-docker compose up -d
-```
+ClearML установлен через Poetry (`clearml = "^1.14.0"`). ClearML Server настроен через docker-compose с 6 сервисами: `clearml-mongo` (MongoDB), `clearml-elastic` (Elasticsearch), `clearml-redis` (Redis), `clearml-server` (API Server, порт 8008), `clearml-fileserver` (File Server, порт 8081), `clearml-webserver` (Web UI, порт 8080). Все сервисы настроены с healthchecks, зависимостями и проброшенными портами для отладки.
 
 **Скриншот:** Запуск ClearML Server через docker-compose
 *(Здесь должен быть скриншот вывода `docker compose up -d clearml-server`)*
 
+**Примечание:** Пошаговые инструкции по установке и настройке ClearML Server см. в `docs/QUICKSTART.md` (Шаг 17.1-17.2).
+
 ### 1.2. Настройка базы данных и хранилища
 
-ClearML Server использует:
-- **MongoDB** - для хранения метаданных экспериментов и моделей
-- **Elasticsearch** - для поиска и индексации
-- **Redis** - для кэширования и очередей задач
-- **File Storage** - для хранения артефактов и моделей
-
-Все компоненты настроены автоматически через docker-compose как отдельные сервисы:
-- `clearml-mongo` - MongoDB (порт 27017)
-- `clearml-elastic` - Elasticsearch (порт 9200)
-- `clearml-redis` - Redis (порт 6379)
+ClearML Server использует MongoDB для хранения метаданных экспериментов и моделей, Elasticsearch для поиска и индексации, Redis для кэширования и очередей задач, File Storage через `clearml-fileserver` для хранения артефактов и моделей. Все компоненты настроены автоматически через docker-compose как отдельные сервисы с проброшенными портами для отладки (MongoDB: 27017, Redis: 6379, Elasticsearch: 9200/9300, File Server: 8081).
 
 **Скриншот:** Структура volumes для ClearML
 *(Здесь должен быть скриншот `docker volume ls` с volumes clearml_*)*
 
-**Отладка:** Для удобства диагностики порты базовых сервисов проброшены на хост:
-
-- MongoDB: `localhost:27017`
-- Redis: `localhost:6379`
-- Elasticsearch: `localhost:9200` (HTTP) и `localhost:9300` (transport)
-- File Server: `localhost:8081`
-
-Это позволяет напрямую подключаться к сервисам из IDE/CLI (`mongo --host localhost`, `redis-cli -h localhost ping`, `curl http://localhost:9200/_cluster/health?pretty`) без захода в контейнер.
-
 ### 1.3. Создание проекта и экспериментов
 
-**Важно:** Перед инициализацией ClearML необходимо получить credentials (см. раздел 1.4).
-
-**Инициализация ClearML:**
-```bash
-# Автоматическая настройка (скрипт покажет инструкции, если credentials не указаны)
-poetry run python scripts/clearml/init_clearml.py
-
-# Или с указанием credentials
-poetry run python scripts/clearml/init_clearml.py \
-  --api-host http://localhost:8008 \
-  --web-host http://localhost:8080 \
-  --access-key <your-access-key> \
-  --secret-key <your-secret-key>
-
-# Или через clearml-init (после установки переменных окружения)
-export CLEARML_API_HOST=http://localhost:8008
-export CLEARML_WEB_HOST=http://localhost:8080
-export CLEARML_API_ACCESS_KEY=<your-access-key>
-export CLEARML_API_SECRET_KEY=<your-secret-key>
-poetry run clearml-init
-```
-
-**Создание проекта:**
-Проект "Engineering Practices ML" создается автоматически при первом запуске эксперимента.
+Создан скрипт `scripts/clearml/init_clearml.py` для инициализации ClearML. Проект "Engineering Practices ML" создается автоматически при первом запуске эксперимента. Перед инициализацией необходимо получить credentials (см. раздел 1.4).
 
 **Скриншот:** Веб-интерфейс ClearML с проектом
 *(Здесь должен быть скриншот веб-интерфейса ClearML на http://localhost:8080)*
 
+**Примечание:** Пошаговые инструкции по инициализации ClearML см. в `docs/QUICKSTART.md` (Шаг 17.3-17.4).
+
 ### 1.4. Настройка аутентификации
 
-**Важно:** При первом запуске ClearML Server автоматически создается системный пользователь `__allegroai__`. Для создания credentials необходимо использовать обычный пользовательский аккаунт.
-
-**Получение credentials:**
-1. Запустить ClearML Server: `docker compose up -d clearml-server clearml-webserver`
-2. Открыть веб-интерфейс: http://localhost:8080
-3. **Создать новый аккаунт** (не использовать системный пользователь):
-   - Нажать "Sign Up" или "Create Account"
-   - Заполнить форму регистрации (email, пароль, имя)
-   - Подтвердить регистрацию
-4. Войти в созданный аккаунт
-5. Перейти в Settings > Workspace > Create new credentials
-6. Скопировать Access Key и Secret Key
-
-**Решение проблемы "Invalid user id (protected identity)":**
-Эта ошибка возникает при попытке создать credentials для системного пользователя. Решение:
-- Убедиться, что вы вошли в обычный пользовательский аккаунт (не `__allegroai__`)
-- Если видите системного пользователя, создать новый аккаунт через "Sign Up"
-- Credentials можно создавать только для обычных пользователей
-
-**Настройка через переменные окружения:**
-```bash
-export CLEARML_API_HOST=http://localhost:8008
-export CLEARML_WEB_HOST=http://localhost:8080
-export CLEARML_API_ACCESS_KEY=<your-access-key>
-export CLEARML_API_SECRET_KEY=<your-secret-key>
-```
+Настроена аутентификация через credentials (Access Key и Secret Key). При первом запуске ClearML Server автоматически создается системный пользователь `__allegroai__`. Для создания credentials необходимо использовать обычный пользовательский аккаунт. Решена проблема "Invalid user id (protected identity)" - добавлены инструкции по созданию обычного пользовательского аккаунта. Credentials можно настроить через переменные окружения или конфигурационный файл `~/.clearml/clearml.conf`.
 
 **Скриншот:** Настройка credentials в ClearML
 *(Здесь должен быть скриншот страницы Settings с credentials)*
+
+**Примечание:** Пошаговые инструкции по получению и настройке credentials см. в `docs/QUICKSTART.md` (Шаг 17.4).
 
 ## 2. Трекинг экспериментов (3 балла)
 
 ### 2.1. Настройка автоматического логирования
 
-Создан класс `ClearMLTracker` в `src/data_science_project/clearml_tracker.py`:
-
-```python
-from src.data_science_project.clearml_tracker import ClearMLTracker
-
-tracker = ClearMLTracker(
-    project_name="Engineering Practices ML",
-    task_name="experiment_001",
-    tags=["ridge", "training"]
-)
-
-# Логирование параметров
-tracker.log_params({"alpha": 1.0, "max_depth": 10})
-
-# Логирование метрик
-tracker.log_metrics({"test_r2": 0.85, "test_rmse": 0.5})
-
-# Логирование артефактов
-tracker.log_artifact("models/model.pkl")
-```
+Создан класс `ClearMLTracker` в `src/data_science_project/clearml_tracker.py` с методами: `log_params()`, `log_metrics()`, `log_artifact()`, `log_model()`, `log_plot()`. Интегрирован в скрипт `scripts/clearml/train_with_clearml.py` для автоматического логирования. Автоматическая загрузка credentials из конфигурационного файла.
 
 **Скриншот:** Пример использования ClearMLTracker
 *(Здесь должен быть скриншот кода с использованием трекера)*
 
+**Примечание:** Примеры использования ClearMLTracker см. в `docs/QUICKSTART.md` (Шаг 17.9).
+
 ### 2.2. Создание системы сравнения экспериментов
 
-Создан скрипт `scripts/clearml/compare_experiments.py`:
-
-```bash
-# Список всех экспериментов
-poetry run python scripts/clearml/compare_experiments.py --list
-
-# Сравнение экспериментов
-poetry run python scripts/clearml/compare_experiments.py \
-  --compare <task_id_1> <task_id_2>
-
-# Экспорт результатов
-poetry run python scripts/clearml/compare_experiments.py \
-  --list --export experiments.json
-```
+Создан скрипт `scripts/clearml/compare_experiments.py` с функциями `compare_experiments()` и `list_experiments()`. Поддержка экспорта результатов в JSON. Автоматическая загрузка credentials.
 
 **Скриншот:** Результаты сравнения экспериментов
 *(Здесь должен быть скриншот вывода команды сравнения или веб-интерфейса)*
 
+**Примечание:** Пошаговые инструкции по сравнению экспериментов см. в `docs/QUICKSTART.md` (Шаг 17.6).
+
 ### 2.3. Настройка логирования метрик и параметров
 
-**Интеграция в скрипт обучения:**
-Создан `scripts/clearml/train_with_clearml.py`, который автоматически:
-- Логирует параметры модели
-- Логирует метрики обучения и тестирования
-- Регистрирует модель
-- Сохраняет артефакты
-
-**Использование:**
-```bash
-poetry run python scripts/clearml/train_with_clearml.py \
-  --config config/train_params.yaml \
-  --model-type ridge \
-  --experiment-name ridge_experiment_001
-```
+Параметры логируются через `task.connect(params)`, метрики через `task.logger.report_single_value()` и `task.get_logger().report_scalar()`. Интеграция в `train_with_clearml.py` автоматически логирует все параметры и метрики. Модели регистрируются с метаданными.
 
 **Скриншот:** Метрики в веб-интерфейсе ClearML
 *(Здесь должен быть скриншот графика метрик в ClearML)*
+
+**Примечание:** Пошаговые инструкции по запуску экспериментов с трекингом см. в `docs/QUICKSTART.md` (Шаг 17.5).
 
 ### 2.4. Создание дашбордов для анализа
 
@@ -285,23 +86,12 @@ ClearML автоматически создает дашборды для каж
 
 ### 3.1. Настройка регистрации и версионирования моделей
 
-Создан класс `ClearMLModelManager` для управления моделями:
-
-```python
-from src.data_science_project.clearml_tracker import ClearMLModelManager
-
-manager = ClearMLModelManager()
-model = manager.register_model(
-    model_path="models/model.pkl",
-    model_name="wine_quality_model",
-    task_id="<task_id>",
-    metadata={"version": "1.0.0", "accuracy": 0.85},
-    tags=["production", "ridge"]
-)
-```
+Создан класс `ClearMLModelManager` для управления моделями с методом `register_model()`. Модели автоматически версионируются при регистрации, каждая модель получает уникальный ID.
 
 **Скриншот:** Регистрация модели в ClearML
 *(Здесь должен быть скриншот веб-интерфейса с зарегистрированной моделью)*
+
+**Примечание:** Пошаговые инструкции по управлению моделями см. в `docs/QUICKSTART.md` (Шаг 17.7).
 
 ### 3.2. Создание системы метаданных для моделей
 
@@ -324,23 +114,7 @@ model = manager.register_model(
 
 ### 3.4. Создание системы сравнения моделей
 
-Создан скрипт `scripts/clearml/manage_models.py`:
-
-```bash
-# Список всех моделей
-poetry run python scripts/clearml/manage_models.py --list
-
-# Сравнение моделей
-poetry run python scripts/clearml/manage_models.py \
-  --compare <model_id_1> <model_id_2>
-
-# Регистрация модели
-poetry run python scripts/clearml/manage_models.py \
-  --register models/model.pkl \
-  --name wine_quality_model \
-  --task-id <task_id> \
-  --tags production
-```
+Создан скрипт `scripts/clearml/manage_models.py` с функциями `list_models()`, `compare_models()`, `register_model()`. Сравнение моделей по метаданным, тегам, дате создания. Поддержка экспорта результатов в JSON.
 
 **Скриншот:** Сравнение моделей
 *(Здесь должен быть скриншот результатов сравнения моделей)*
@@ -349,78 +123,16 @@ poetry run python scripts/clearml/manage_models.py \
 
 ### 4.1. Создание ClearML пайплайнов для ML workflow
 
-Создан скрипт `scripts/clearml/ml_pipeline.py` для создания пайплайна:
-
-```python
-from src.data_science_project.clearml_tracker import create_clearml_pipeline
-
-pipeline = create_clearml_pipeline(
-    pipeline_name="ML Training Pipeline",
-    project_name="Engineering Practices ML"
-)
-```
-
-Пайплайн включает 4 стадии:
-1. `prepare_data` - подготовка данных
-2. `validate_data` - валидация данных
-3. `train_model` - обучение модели
-4. `evaluate_model` - оценка модели
-
-#### Подготовка шаблонных задач
-
-ClearML Pipeline переиспользует существующие задачи как "template". Перед запуском необходимо один раз создать шаблоны (из корня проекта):
-
-```bash
-PROJECT="Engineering Practices ML"
-
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "prepare_data_template" \
-  --script scripts/data/prepare_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
-
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "validate_data_template" \
-  --script scripts/data/validate_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
-
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "train_model_template" \
-  --script scripts/clearml/train_with_clearml.py \
-  --working-directory . \
-  --task-type training \
-  --queue default
-
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "evaluate_model_template" \
-  --script scripts/models/evaluate_model.py \
-  --working-directory . \
-  --task-type testing \
-  --queue default
-```
-
-После создания шаблонов их можно увидеть в веб-интерфейсе и переиспользовать в пайплайне.
+Создан скрипт `scripts/clearml/ml_pipeline.py` для создания пайплайна. Функция `create_clearml_pipeline()` создает пайплайн с 4 стадиями: `prepare_data`, `validate_data`, `train_model`, `evaluate_model`. Пайплайн использует template tasks для переиспользования. Инструкции по созданию template tasks включены в документацию.
 
 **Скриншот:** Структура пайплайна в ClearML
 *(Здесь должен быть скриншот графа пайплайна в веб-интерфейсе)*
 
+**Примечание:** Пошаговые инструкции по созданию пайплайнов см. в `docs/QUICKSTART.md` (Шаг 17.8).
+
 ### 4.2. Настройка автоматического запуска пайплайнов
 
-**Запуск пайплайна:**
-```bash
-poetry run python scripts/clearml/ml_pipeline.py \
-  --model-type rf \
-  --queue default
-```
-
-Пайплайн автоматически запускается в указанной очереди.
+Пайплайн автоматически запускается в указанной очереди через `pipeline.start(queue=args.queue)`. Параметры пайплайна настраиваются через `pipeline.add_parameter()` и `pipeline.set_parameter()`. Скрипт `ml_pipeline.py` поддерживает аргументы командной строки.
 
 **Скриншот:** Запуск пайплайна
 *(Здесь должен быть скриншот запущенного пайплайна)*
@@ -438,28 +150,12 @@ ClearML автоматически отслеживает:
 
 ### 4.4. Настройка уведомлений
 
-ClearML уведомляет о статусе задач. Для Slack:
-
-1. Создайте Slack Incoming Webhook и скопируйте URL.
-2. В ClearML UI откройте Settings → Workspace → Notifications → Add Rule.
-3. Выберите тип `Slack`, вставьте URL, определите события (`Task Completed`, `Task Failed`, `Pipeline Failed`) и сохраните.
-4. Добавьте webhook в локальный `~/.clearml/clearml.conf`, чтобы CLI тоже отправлял уведомления:
-
-```ini
-notifications {
-    slack {
-        url = "https://hooks.slack.com/services/XXX/YYY/ZZZ"
-        channel = "#mlops-alerts"
-        notify_failed = true
-        notify_completed = true
-    }
-}
-```
-
-Аналогично можно настроить Email (SMTP) или произвольный Webhook.
+Инструкции по настройке уведомлений через Slack включены в документацию. Поддержка Email (SMTP) и произвольных Webhooks. Конфигурация через веб-интерфейс и конфигурационный файл `~/.clearml/clearml.conf`.
 
 **Скриншот:** Настройка уведомлений
 *(Здесь должен быть скриншот страницы настроек уведомлений)*
+
+**Примечание:** Пошаговые инструкции по настройке уведомлений см. в `docs/QUICKSTART.md` (Шаг 17.11).
 
 ## 5. Отчет о проделанной работе (1 балл)
 

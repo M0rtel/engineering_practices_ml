@@ -4,19 +4,18 @@
 
 Настроена система трекинга экспериментов с использованием DVC Experiments. Система позволяет отслеживать параметры, метрики и артефакты экспериментов, сравнивать результаты и фильтровать по различным критериям.
 
+> **Примечание:** Для получения пошаговых инструкций по настройке и использованию системы трекинга экспериментов см. `docs/QUICKSTART.md` (Шаг 12). Данный отчет описывает **что было настроено**, а не **как это настроить**.
+
 ## 1. Настройка выбранного инструмента (4 балла)
 
 ### 1.1. Установка и настройка DVC
 
 DVC уже установлен и настроен (см. ДЗ 2). Для трекинга экспериментов используется встроенная функциональность DVC Experiments.
 
-**Проверка версии:**
-```bash
-dvc --version
-```
-
 **Скриншот:** Версия DVC и проверка настроек
 *(Здесь должен быть скриншот вывода `dvc --version` и `dvc remote list`)*
+
+**Примечание:** Пошаговые инструкции по установке и настройке DVC см. в `docs/QUICKSTART.md` (Шаг 5) и `docs/homework_2/REPORT.md`.
 
 ### 1.2. Настройка базы данных/облачного хранилища
 
@@ -33,23 +32,16 @@ dvc --version
 ### 1.3. Создание проекта и экспериментов
 
 Создана структура для экспериментов:
+- `config/experiments/` - конфигурации экспериментов (YAML и JSON)
+- `reports/experiments/` - параметры экспериментов
+- `reports/metrics/` - метрики экспериментов
 
-```
-experiments/              # Директория для экспериментов
-config/experiments/       # Конфигурации экспериментов
-reports/experiments/      # Параметры экспериментов
-reports/metrics/          # Метрики экспериментов
-```
-
-**Генерация конфигураций:**
-```bash
-python scripts/experiments/generate_experiments.py
-```
-
-Создано 26 конфигураций экспериментов с разными алгоритмами и параметрами.
+Создано 26 конфигураций экспериментов с разными алгоритмами и параметрами через скрипт `scripts/experiments/generate_experiments.py`. Эксперименты включают: Linear, Ridge, Lasso, ElasticNet, KNN, SVR, Decision Tree, Random Forest, AdaBoost, Gradient Boosting.
 
 **Скриншот:** Структура экспериментов
 *(Здесь должен быть скриншот директории `config/experiments/` с файлами)*
+
+**Примечание:** Пошаговые инструкции по генерации и запуску экспериментов см. в `docs/QUICKSTART.md` (Шаг 12).
 
 ### 1.4. Настройка аутентификации и доступа
 
@@ -65,8 +57,7 @@ python scripts/experiments/generate_experiments.py
 
 ### 2.1. Проведение 15+ экспериментов
 
-Создано 26 экспериментов с разными алгоритмами:
-
+Создано 26 экспериментов (больше требуемых 15) с разными алгоритмами:
 - **Linear models:** Linear, Ridge (3 варианта), Lasso (2 варианта), ElasticNet
 - **KNN:** 3 варианта (n_neighbors: 5, 10, 20)
 - **SVR:** 3 варианта (разные C и kernel)
@@ -75,76 +66,45 @@ python scripts/experiments/generate_experiments.py
 - **AdaBoost:** 2 варианта
 - **Gradient Boosting:** 3 варианта
 
-**Запуск всех экспериментов:**
-```bash
-python scripts/experiments/run_all_experiments.py
-```
+Все эксперименты запускаются через скрипт `scripts/experiments/run_all_experiments.py`. Найдено 26 файлов с параметрами экспериментов в `reports/experiments/`.
 
 **Скриншот:** Результаты запуска экспериментов
 *(Здесь должен быть скриншот вывода `run_all_experiments.py`)*
 
 ### 2.2. Логирование метрик, параметров и артефактов
 
-**Логирование через DVC:**
+Настроено логирование через DVC и Python API:
 - Параметры сохраняются в `reports/experiments/{exp_id}_params.json`
 - Метрики сохраняются в `reports/metrics/{exp_id}_metrics.json`
 - Модели сохраняются в `models/{exp_id}_model.pkl` и версионируются через DVC
 
-**Python API:**
-```python
-from src.data_science_project import experiment_tracker
-
-tracker = experiment_tracker.DVCExperimentTracker()
-tracker.log_params("exp_001", {"alpha": 1.0})
-tracker.log_metrics("exp_001", {"test_r2": 0.85})
-tracker.log_artifact("exp_001", "models/model.pkl")
-```
+Python API реализован в классе `DVCExperimentTracker` с методами `log_params()`, `log_metrics()`, `log_artifact()`.
 
 **Скриншот:** Пример логирования метрик и параметров
 *(Здесь должен быть скриншот содержимого JSON файлов с метриками и параметрами)*
 
+**Примечание:** Примеры использования Python API см. в `docs/QUICKSTART.md` (Шаг 12.4).
+
 ### 2.3. Система сравнения экспериментов
 
-**Сравнение через скрипт:**
-```bash
-python scripts/experiments/compare_experiments.py --compare exp_001_linear exp_002_ridge_1.0
-```
+Реализована система сравнения экспериментов:
+- Скрипт: `scripts/experiments/compare_experiments.py --compare`
+- Python API: `tracker.compare_experiments(exp1, exp2)`
+- DVC команды: `dvc metrics diff`, `dvc params diff`, `dvc exp diff`
 
-**Python API:**
-```python
-comparison = tracker.compare_experiments("exp_001", "exp_002")
-```
-
-**DVC команды:**
-```bash
-dvc metrics diff
-dvc params diff
-dvc exp diff exp1 exp2
-```
+Сравнение включает параметры и метрики с вычислением разницы.
 
 **Скриншот:** Результаты сравнения экспериментов
 *(Здесь должен быть скриншот вывода `compare_experiments.py --compare`)*
 
 ### 2.4. Фильтрация и поиск экспериментов
 
-**Фильтрация:**
-```bash
-# По модели
-python scripts/experiments/compare_experiments.py --filter-model rf
-
-# По метрикам
-python scripts/experiments/compare_experiments.py --min-r2 0.5 --max-rmse 0.8
-```
-
-**Поиск:**
-```bash
-python scripts/experiments/compare_experiments.py --search ridge
-```
-
-**Экспорт в CSV:**
-```bash
-python scripts/experiments/compare_experiments.py --export experiments.csv
-```
+Реализована система фильтрации и поиска:
+- Фильтрация по модели: `--filter-model`
+- Фильтрация по метрикам: `--min-r2`, `--max-rmse`
+- Поиск по запросу: `--search`
+- Экспорт в CSV: `--export`
+- Список всех экспериментов: `--list`
 
 **Скриншот:** Результаты фильтрации и поиска
 *(Здесь должен быть скриншот вывода команд фильтрации и CSV файла)*
@@ -153,46 +113,26 @@ python scripts/experiments/compare_experiments.py --export experiments.csv
 
 ### 3.1. Интеграция в Python код
 
-Создан модуль `src/data_science_project/experiment_tracker.py` с классом `DVCExperimentTracker`:
-
-```python
-from src.data_science_project import experiment_tracker
-
-tracker = experiment_tracker.DVCExperimentTracker()
-tracker.log_params("exp_001", params)
-tracker.log_metrics("exp_001", metrics)
-```
+Создан модуль `src/data_science_project/experiment_tracker.py` с классом `DVCExperimentTracker`. Класс предоставляет методы для логирования параметров, метрик и артефактов, получения данных эксперимента, списка экспериментов и сравнения.
 
 **Скриншот:** Пример использования Python API
 *(Здесь должен быть скриншот кода с использованием трекера)*
 
+**Примечание:** Примеры использования Python API см. в `docs/QUICKSTART.md` (Шаг 12.4).
+
 ### 3.2. Декораторы для автоматического логирования
 
-Создан декоратор `@track_experiment`:
-
-```python
-from src.data_science_project.experiment_tracker import track_experiment
-
-@track_experiment(experiment_id="exp_001")
-def train_model(**params):
-    # Код обучения
-    return {"test_r2": 0.85, "test_rmse": 0.5}
-```
+Создан декоратор `@track_experiment(experiment_id)`, который автоматически:
+- Логирует параметры из kwargs функции
+- Логирует метрики из возвращаемого значения
+- Генерирует experiment_id автоматически, если не указан
 
 **Скриншот:** Пример использования декоратора
 *(Здесь должен быть скриншот кода с декоратором)*
 
 ### 3.3. Контекстные менеджеры
 
-Создан контекстный менеджер `experiment()`:
-
-```python
-from src.data_science_project.experiment_tracker import experiment
-
-with experiment("exp_001", params={"alpha": 1.0}) as tracker:
-    # Код эксперимента
-    tracker.log_metrics("exp_001", metrics)
-```
+Создан контекстный менеджер `experiment(experiment_id, params)`, который автоматически логирует параметры при входе и возвращает трекер для логирования метрик внутри блока.
 
 **Скриншот:** Пример использования контекстного менеджера
 *(Здесь должен быть скриншот кода с контекстным менеджером)*
