@@ -240,21 +240,40 @@ git checkout -b bugfix/fix-name
 - **Poetry** - управление зависимостями
 - **MinIO** - S3-совместимое хранилище для DVC
 - **GitHub Actions** - CI/CD автоматизация
+- **MkDocs** - генерация и публикация документации
 
 ## Документация
 
-- `docs/homework_1/` - Домашнее задание 1: Настройка рабочего места Data Scientist
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_2/` - Домашнее задание 2: Версионирование данных и моделей с DVC
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_3/` - Домашнее задание 3: Трекинг экспериментов с DVC
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_4/` - Домашнее задание 4: Автоматизация ML пайплайнов
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/homework_5/` - Домашнее задание 5: ClearML для MLOps
-  - `REPORT.md` - Отчет о проделанной работе
-- `docs/GIT_WORKFLOW.md` - Документация по Git workflow
-- `docs/QUICKSTART.md` - Руководство по быстрому старту
+Документация проекта доступна онлайн на [GitHub Pages](https://gorobets.github.io/engineering_practices_ml/).
+
+### Локальная документация
+
+Для просмотра документации локально:
+
+```bash
+# Сборка документации
+make docs-build
+
+# Запуск локального сервера
+make docs-serve
+# Откройте http://127.0.0.1:8000
+```
+
+### Структура документации
+
+- **Главная страница** - Обзор проекта и быстрый старт
+- **Quick Start Guide** (`docs/QUICKSTART.md`) - Полное руководство по настройке
+- **Deployment Guide** (`docs/DEPLOYMENT.md`) - Руководство по развертыванию
+- **Homework Reports:**
+  - `docs/homework_1/REPORT.md` - ДЗ 1: Настройка рабочего места Data Scientist
+  - `docs/homework_2/REPORT.md` - ДЗ 2: Версионирование данных и моделей с DVC
+  - `docs/homework_3/REPORT.md` - ДЗ 3: Трекинг экспериментов с DVC
+  - `docs/homework_4/REPORT.md` - ДЗ 4: Автоматизация ML пайплайнов
+  - `docs/homework_5/REPORT.md` - ДЗ 5: ClearML для MLOps
+  - `docs/homework_6/REPORT.md` - ДЗ 6: Документация и отчеты
+- **Experiment Reports** - Автоматически сгенерированные отчеты об экспериментах
+- **API Reference** - Справочник API для всех модулей
+- **Git Workflow** (`docs/GIT_WORKFLOW.md`) - Документация по Git workflow
 
 ## Автор
 

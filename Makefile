@@ -41,3 +41,15 @@ setup-pre-commit: ## Настроить pre-commit hooks
 
 pre-commit-all: ## Запустить pre-commit на всех файлах
 	poetry run pre-commit run --all-files
+
+docs-build: ## Собрать документацию
+	poetry run mkdocs build
+
+docs-serve: ## Запустить локальный сервер документации
+	poetry run mkdocs serve
+
+docs-deploy: ## Опубликовать документацию на GitHub Pages
+	poetry run mkdocs gh-deploy
+
+report-generate: ## Сгенерировать отчет об экспериментах
+	poetry run python scripts/reports/generate_experiment_report.py
