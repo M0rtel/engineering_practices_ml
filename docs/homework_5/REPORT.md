@@ -10,7 +10,7 @@
 
 ### 1.1. Установка и настройка ClearML Server
 
-ClearML установлен через Poetry (`clearml = "^1.14.0"`). ClearML Server настроен через docker-compose с 6 сервисами: `clearml-mongo` (MongoDB), `clearml-elastic` (Elasticsearch), `clearml-redis` (Redis), `clearml-server` (API Server, порт 8008), `clearml-fileserver` (File Server, порт 8081), `clearml-webserver` (Web UI, порт 8080). Все сервисы настроены с healthchecks, зависимостями и проброшенными портами для отладки.
+ClearML установлен через UV (`clearml>=1.14.0`). ClearML Server настроен через docker-compose с 6 сервисами: `clearml-mongo` (MongoDB), `clearml-elastic` (Elasticsearch), `clearml-redis` (Redis), `clearml-server` (API Server, порт 8008), `clearml-fileserver` (File Server, порт 8081), `clearml-webserver` (Web UI, порт 8080). Все сервисы настроены с healthchecks, зависимостями и проброшенными портами для отладки.
 
 **Скриншот:** Запуск ClearML Server через docker-compose
 *(Здесь должен быть скриншот вывода `docker compose up -d clearml-server`)*

@@ -5,29 +5,30 @@ set -e
 
 echo "🚀 Настройка проекта Engineering Practices ML..."
 
-# Проверка наличия Poetry
-if ! command -v poetry &> /dev/null; then
-    echo "❌ Poetry не установлен. Устанавливаю..."
-    curl -sSL https://install.python-poetry.org | python3 -
+# Проверка наличия UV
+if ! command -v uv &> /dev/null; then
+    echo "❌ UV не установлен. Устанавливаю..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Установка зависимостей
 echo "📦 Установка зависимостей..."
-poetry install
+uv sync
 
 # Настройка pre-commit hooks
 echo "🔧 Настройка pre-commit hooks..."
-poetry run pre-commit install
+uv run pre-commit install
 
-# Создание виртуального окружения (если еще не создано)
-echo "🐍 Создание виртуального окружения..."
-poetry env info
+# Проверка версии UV
+echo "🐍 Проверка установки UV..."
+uv --version
 
 echo "✅ Настройка завершена!"
 echo ""
-echo "Для активации виртуального окружения выполните:"
-echo "  poetry shell"
+echo "UV автоматически управляет виртуальным окружением."
+echo "Используйте 'uv run' для выполнения команд:"
+echo "  uv run python <script>"
 echo ""
 echo "Для запуска pre-commit на всех файлах:"
-echo "  poetry run pre-commit run --all-files"
+echo "  uv run pre-commit run --all-files"

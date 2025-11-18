@@ -7,7 +7,7 @@
 Для генерации отчета об экспериментах:
 
 ```bash
-poetry run python scripts/reports/generate_experiment_report.py
+uv run python scripts/reports/generate_experiment_report.py
 ```
 
 Это создаст:
@@ -18,8 +18,8 @@ poetry run python scripts/reports/generate_experiment_report.py
 ## Автоматическая генерация
 
 Отчеты автоматически генерируются при:
-- Запуске всех экспериментов: `poetry run python scripts/experiments/run_all_experiments.py`
-- Запуске пайплайна с мониторингом: `poetry run python scripts/pipeline/run_pipeline.py --monitor`
+- Запуске всех экспериментов: `uv run python scripts/experiments/run_all_experiments.py`
+- Запуске пайплайна с мониторингом: `uv run python scripts/pipeline/run_pipeline.py --monitor`
 
 ## Структура отчета
 

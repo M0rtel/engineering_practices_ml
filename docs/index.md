@@ -27,19 +27,18 @@
 
 2. **Установите зависимости:**
    ```bash
-   poetry install
-   poetry shell
+   uv sync
    ```
 
 3. **Настройте проект:**
    ```bash
-   poetry run dvc init --no-scm
-   poetry run pre-commit install
+   uv run dvc init --no-scm
+   uv run pre-commit install
    ```
 
 4. **Запустите пайплайн:**
    ```bash
-   poetry run dvc repro
+   uv run dvc repro
    ```
 
 📖 **Подробная инструкция:** [Quick Start Guide](QUICKSTART.md)
@@ -65,10 +64,10 @@ engineering_practices_ml/
 
 ```bash
 # Добавление данных в DVC
-poetry run dvc add data/raw/WineQT.csv
+uv run dvc add data/raw/WineQT.csv
 
 # Отправка в remote storage
-poetry run dvc push
+uv run dvc push
 ```
 
 ### Трекинг экспериментов
@@ -77,12 +76,12 @@ poetry run dvc push
 
 ```bash
 # Запуск эксперимента
-poetry run python scripts/experiments/run_experiment.py \
+uv run python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 
 # Сравнение экспериментов
-poetry run python scripts/experiments/compare_experiments.py --list
+uv run python scripts/experiments/compare_experiments.py --list
 ```
 
 ### ML Пайплайны
@@ -91,10 +90,10 @@ poetry run python scripts/experiments/compare_experiments.py --list
 
 ```bash
 # Запуск всего пайплайна
-poetry run dvc repro
+uv run dvc repro
 
 # Запуск с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py \
+uv run python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 ```
@@ -105,12 +104,12 @@ poetry run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Обучение с трекингом
-poetry run python scripts/clearml/train_with_clearml.py \
+uv run python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge
 
 # Управление моделями
-poetry run python scripts/clearml/manage_models.py --list
+uv run python scripts/clearml/manage_models.py --list
 ```
 
 ## Документация
@@ -124,7 +123,7 @@ poetry run python scripts/clearml/manage_models.py --list
 ## Требования
 
 - Python 3.10+
-- Poetry
+- UV
 - Docker (опционально)
 - Git
 

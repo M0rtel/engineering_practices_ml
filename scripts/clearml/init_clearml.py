@@ -60,7 +60,7 @@ def init_clearml(
         print("  export CLEARML_API_ACCESS_KEY=<your-access-key>")
         print("  export CLEARML_API_SECRET_KEY=<your-secret-key>")
         print("\nИли используйте команду:")
-        print("  poetry run clearml-init")
+        print("  uv run clearml-init")
         return
 
     # Создаем конфигурационный файл ClearML

@@ -146,7 +146,7 @@
 **Команды:**
 ```bash
 # Ручная генерация
-poetry run python scripts/reports/generate_experiment_report.py
+uv run python scripts/reports/generate_experiment_report.py
 
 # Через Makefile
 make report-generate
@@ -179,7 +179,7 @@ make report-generate
 
 Настроена автоматическая сборка документации:
 
-- **Локально:** `make docs-build` или `poetry run mkdocs build`
+- **Локально:** `make docs-build` или `uv run mkdocs build`
 - **GitHub Actions:** Автоматическая сборка при push
 - **Публикация:** Автоматическая публикация на GitHub Pages
 
