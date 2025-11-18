@@ -1,11 +1,11 @@
 site_name: Engineering Practices ML
 site_description: Data Science project with modern engineering practices
 site_author: Igor Gorobets
-site_url: https://gorobets.github.io/engineering_practices_ml/
+site_url: https://M0rtel.github.io/engineering_practices_ml/
 # Если репозиторий находится в другой организации, обновите URL выше
 
 repo_name: engineering_practices_ml
-repo_url: https://github.com/gorobets/engineering_practices_ml
+repo_url: https://github.com/M0rtel/engineering_practices_ml
 edit_uri: edit/main/docs/
 
 theme:
@@ -39,20 +39,18 @@ plugins:
   - search
   - minify:
       minify_html: true
-  - mermaid2
+  - mermaid2:
+      arguments:
+        theme: default
 
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
+  - pymdownx.superfences
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -72,7 +70,7 @@ nav:
     - Homework 5: homework_5/REPORT.md
     - Homework 6: homework_6/REPORT.md
   - Experiment Reports:
-    - Overview: reports/experiments/README.md
+    - Overview: reports/README.md
     - Latest Report: reports/experiments/latest.md
   - API Reference:
     - Experiment Tracker: api/experiment_tracker.md

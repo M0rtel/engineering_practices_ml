@@ -192,3 +192,4 @@ reports/experiments/*
 reports/plots/*
 !reports/experiments/.gitkeep
 !reports/plots/.gitkeep
+data_logs/
