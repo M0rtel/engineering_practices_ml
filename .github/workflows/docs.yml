@@ -35,7 +35,7 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Generate experiment reports
         run: |
