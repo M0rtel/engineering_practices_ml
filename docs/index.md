@@ -25,20 +25,28 @@
    cd engineering_practices_ml
    ```
 
-2. **Установите зависимости:**
+2. **Создайте и активируйте виртуальное окружение:**
+   ```bash
+   uv venv
+   source .venv/bin/activate  # Linux/macOS
+   # или
+   .venv\Scripts\activate  # Windows
+   ```
+
+3. **Установите зависимости:**
    ```bash
    uv sync
    ```
 
-3. **Настройте проект:**
+4. **Настройте проект:**
    ```bash
-   uv run dvc init --no-scm
-   uv run pre-commit install
+   dvc init --no-scm
+   pre-commit install
    ```
 
-4. **Запустите пайплайн:**
+5. **Запустите пайплайн:**
    ```bash
-   uv run dvc repro
+   dvc repro
    ```
 
 📖 **Подробная инструкция:** [Quick Start Guide](QUICKSTART.md)
@@ -64,10 +72,10 @@ engineering_practices_ml/
 
 ```bash
 # Добавление данных в DVC
-uv run dvc add data/raw/WineQT.csv
+dvc add data/raw/WineQT.csv
 
 # Отправка в remote storage
-uv run dvc push
+dvc push
 ```
 
 ### Трекинг экспериментов
@@ -76,12 +84,12 @@ uv run dvc push
 
 ```bash
 # Запуск эксперимента
-uv run python scripts/experiments/run_experiment.py \
+python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 
 # Сравнение экспериментов
-uv run python scripts/experiments/compare_experiments.py --list
+python scripts/experiments/compare_experiments.py --list
 ```
 
 ### ML Пайплайны
@@ -90,10 +98,10 @@ uv run python scripts/experiments/compare_experiments.py --list
 
 ```bash
 # Запуск всего пайплайна
-uv run dvc repro
+dvc repro
 
 # Запуск с мониторингом
-uv run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 ```
@@ -104,19 +112,19 @@ uv run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Обучение с трекингом
-uv run python scripts/clearml/train_with_clearml.py \
+python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge
 
 # Управление моделями
-uv run python scripts/clearml/manage_models.py --list
+python scripts/clearml/manage_models.py --list
 ```
 
 ## Документация
 
 - 📘 [Quick Start Guide](QUICKSTART.md) - Полное руководство по настройке
 - 🚀 [Deployment Guide](DEPLOYMENT.md) - Руководство по развертыванию
-- 📊 [Experiment Reports](reports/experiments/README.md) - Отчеты об экспериментах
+- 📊 [Experiment Reports](reports/README.md) - Отчеты об экспериментах
 - 📝 [Homework Reports](homework_1/REPORT.md) - Отчеты по домашним заданиям
 - 🔧 [API Reference](api/experiment_tracker.md) - Справочник API
 

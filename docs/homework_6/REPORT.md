@@ -145,8 +145,8 @@
 
 **Команды:**
 ```bash
-# Ручная генерация
-uv run python scripts/reports/generate_experiment_report.py
+# Ручная генерация (убедитесь, что виртуальное окружение активировано!)
+python scripts/reports/generate_experiment_report.py
 
 # Через Makefile
 make report-generate
@@ -179,7 +179,7 @@ make report-generate
 
 Настроена автоматическая сборка документации:
 
-- **Локально:** `make docs-build` или `uv run mkdocs build`
+- **Локально:** `make docs-build` или `mkdocs build` (в активированном окружении)
 - **GitHub Actions:** Автоматическая сборка при push
 - **Публикация:** Автоматическая публикация на GitHub Pages
 

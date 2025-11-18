@@ -4,7 +4,12 @@ help: ## Показать справку
 	@echo "Доступные команды:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-install: ## Установить зависимости через UV
+venv: ## Создать виртуальное окружение
+	uv venv
+	@echo "✅ Виртуальное окружение создано в .venv/"
+	@echo "Активируйте его: source .venv/bin/activate"
+
+install: ## Установить зависимости через UV (требует активированного venv)
 	uv sync
 
 format: ## Форматировать код (Black, isort, Ruff)

@@ -1,5 +1,5 @@
 config_file: config/train_params.yaml
-model_type: gb
+model_type: ridge
 enable_validation: true
 enable_monitoring: true
 train:

@@ -27,50 +27,65 @@ git clone https://github.com/gorobets/engineering_practices_ml.git
 cd engineering_practices_ml
 ```
 
-### Шаг 2: Установка зависимостей
+### Шаг 2: Создание виртуального окружения
+
+```bash
+# Создание виртуального окружения
+uv venv
+
+# Активация окружения
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate  # Windows
+```
+
+### Шаг 3: Установка зависимостей
 
 ```bash
 # Установка UV (если не установлен)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Установка зависимостей проекта
-uv sync
+# Установка зависимостей проекта (в активированном окружении, включая dev)
+uv sync --all-extras
 ```
 
-### Шаг 3: Настройка DVC
+### Шаг 4: Настройка DVC
 
 ```bash
 # Инициализация DVC
-uv run dvc init --no-scm
+# Убедитесь, что виртуальное окружение активировано!
+dvc init --no-scm
 
 # Настройка remote storage (выберите один вариант)
 # Локальное хранилище
-uv run dvc remote add local storage/local
-uv run dvc remote default local
+dvc remote add local storage/local
+dvc remote default local
 
 # MinIO (требует запущенный MinIO)
-uv run dvc remote add minio s3://engineering-practices-ml/dvc
-uv run dvc remote modify minio endpointurl http://localhost:9000
-uv run dvc remote modify minio access_key_id minioadmin --local
-uv run dvc remote modify minio secret_access_key minioadmin --local
-uv run dvc remote default minio
+dvc remote add minio s3://engineering-practices-ml/dvc
+dvc remote modify minio endpointurl http://localhost:9000
+dvc remote modify minio access_key_id minioadmin --local
+dvc remote modify minio secret_access_key minioadmin --local
+dvc remote default minio
 ```
 
 ### Шаг 4: Настройка pre-commit hooks
 
 ```bash
-uv run pre-commit install
-uv run pre-commit run --all-files
+# Убедитесь, что виртуальное окружение активировано!
+pre-commit install
+pre-commit run --all-files
 ```
 
 ### Шаг 5: Запуск пайплайна
 
 ```bash
 # Добавление исходных данных
-uv run dvc add data/raw/WineQT.csv
+# Убедитесь, что виртуальное окружение активировано!
+dvc add data/raw/WineQT.csv
 
 # Запуск пайплайна
-uv run dvc repro
+dvc repro
 ```
 
 ## Развертывание с Docker
@@ -121,7 +136,7 @@ docker compose down
 aws s3 mb s3://engineering-practices-ml-dvc
 
 # Настройка DVC для S3
-uv run dvc remote add s3 s3://engineering-practices-ml-dvc/dvc
+dvc remote add s3 s3://engineering-practices-ml-dvc/dvc
 
 # Настройка credentials через переменные окружения
 export AWS_ACCESS_KEY_ID=your_key
@@ -152,7 +167,7 @@ pip install gsutil
 gsutil mb gs://engineering-practices-ml-dvc
 
 # Настройка DVC для GCS
-uv run dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
+dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
 ```
 
 ### Azure
@@ -161,9 +176,9 @@ uv run dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
 
 ```bash
 # Настройка DVC для Azure
-uv run dvc remote add azure azure://engineering-practices-ml-dvc/dvc
-uv run dvc remote modify azure account_name your_account_name
-uv run dvc remote modify azure account_key your_account_key --local
+dvc remote add azure azure://engineering-practices-ml-dvc/dvc
+dvc remote modify azure account_name your_account_name
+dvc remote modify azure account_key your_account_key --local
 ```
 
 ## Настройка CI/CD
@@ -194,7 +209,7 @@ test:
   script:
     - pip install uv
     - uv sync
-    - uv run pytest
+    - pytest  # Убедитесь, что виртуальное окружение активировано!
 
 build:
   stage: build
@@ -249,7 +264,7 @@ docker compose logs -f clearml-server
 3. Создайте credentials в Settings > Workspace
 4. Настройте локальный клиент:
    ```bash
-   uv run python scripts/clearml/init_clearml.py \
+python scripts/clearml/init_clearml.py \
      --api-host http://your-clearml-server:8008 \
      --web-host http://your-clearml-server:8080 \
      --access-key <your-key> \
@@ -295,7 +310,7 @@ docker compose ps minio
 
 ```bash
 # Запуск с мониторингом
-uv run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 ```
@@ -312,18 +327,18 @@ uv run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Проверка статуса
-uv run dvc status
+dvc status
 
 # Очистка кэша
-uv run dvc cache dir
-uv run dvc cache clean
+dvc cache dir
+dvc cache clean
 ```
 
 ### Проблемы с ClearML
 
 ```bash
 # Проверка подключения
-uv run python -c "from clearml import Task; print('OK')"
+python -c "from clearml import Task; print('OK')"
 
 # Просмотр логов
 docker compose logs clearml-server

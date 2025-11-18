@@ -7,7 +7,8 @@
 Для генерации отчета об экспериментах:
 
 ```bash
-uv run python scripts/reports/generate_experiment_report.py
+# Убедитесь, что виртуальное окружение активировано!
+python scripts/reports/generate_experiment_report.py
 ```
 
 Это создаст:
@@ -18,8 +19,8 @@ uv run python scripts/reports/generate_experiment_report.py
 ## Автоматическая генерация
 
 Отчеты автоматически генерируются при:
-- Запуске всех экспериментов: `uv run python scripts/experiments/run_all_experiments.py`
-- Запуске пайплайна с мониторингом: `uv run python scripts/pipeline/run_pipeline.py --monitor`
+- Запуске всех экспериментов: `python scripts/experiments/run_all_experiments.py`
+- Запуске пайплайна с мониторингом: `python scripts/pipeline/run_pipeline.py --monitor`
 
 ## Структура отчета
 
@@ -32,4 +33,4 @@ uv run python scripts/reports/generate_experiment_report.py
 
 ## Просмотр отчетов
 
-Отчеты доступны в веб-интерфейсе документации: [Latest Report](latest.md)
+Отчеты доступны в веб-интерфейсе документации: [Latest Report](experiments/latest.md)

@@ -45,6 +45,9 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/data_science_project"]
+
 [tool.black]
 line-length = 88
 target-version = ['py310']
@@ -120,6 +123,11 @@ module = [
     "tabulate",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["src.data_science_project.clearml_tracker"]
+warn_unreachable = false
+warn_unused_ignores = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

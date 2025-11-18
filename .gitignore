@@ -4,7 +4,10 @@ __pycache__/
 *$py.class
 
 # C extensions
-*.so
+*.socredentials {
+"access_key"="RY3DMPCW03Q00VW69S7136XAC3EQL0"
+"secret_key"="Fofq1lUBR5w1tpzcurOdLxcFGZYToYCjYIuEyR6tEsOjNkvLusikYTeyGTEHPlu3_a0"
+}
 
 # Distribution / packaging
 .Python

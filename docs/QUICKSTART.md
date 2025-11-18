@@ -40,66 +40,114 @@ uv --version
 pip install uv
 ```
 
-## Шаг 3: Установка зависимостей проекта
+## Шаг 3: Создание виртуального окружения
+
+UV может работать двумя способами:
+1. **С явным виртуальным окружением** (рекомендуется) - создается в `.venv/`
+2. **Без явного окружения** - UV управляет окружением автоматически
+
+### Рекомендуемый способ: Явное виртуальное окружение
+
+```bash
+# Создание виртуального окружения
+uv venv
+
+# Активация виртуального окружения
+# Для Linux/macOS:
+source .venv/bin/activate
+
+# Для Windows:
+# .venv\Scripts\activate
+```
+
+**Проверка активации:**
+```bash
+# После активации в начале строки терминала должно появиться (.venv)
+which python  # Должен показать путь к .venv/bin/python
+python --version  # Должен показать Python 3.10+
+```
+
+## Шаг 4: Установка зависимостей проекта
 
 ### Вариант A: Автоматическая настройка (рекомендуется)
 
 ```bash
-# Запустить скрипт автоматической настройки (если существует)
+# Запустить скрипт автоматической настройки
 ./scripts/setup/setup.sh
 
-# Или выполнить шаги вручную (см. Вариант B)
+# Скрипт автоматически:
+# 1. Создаст виртуальное окружение (.venv)
+# 2. Установит все зависимости
+# 3. Настроит pre-commit hooks
 ```
 
-**Примечание:** Скрипт `setup.sh` может отсутствовать. В этом случае используйте Вариант B.
+**Примечание:** После выполнения скрипта активируйте виртуальное окружение:
+```bash
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate  # Windows
+```
 
 ### Вариант B: Ручная установка
 
 ```bash
-# Установка зависимостей через UV
-uv sync
+# Убедитесь, что виртуальное окружение активировано
+# (см. Шаг 3)
 
-# UV автоматически создает и управляет виртуальным окружением
-# Команды выполняются через `uv run`
+# Установка зависимостей через UV (включая dev зависимости)
+uv sync --all-extras
+
+# Проверка установки
+python --version
+pip list
 ```
 
-**Важно:** Все последующие команды должны выполняться либо:
-- С префиксом `uv run` (например, `uv run python`)
+**Важно:** После активации виртуального окружения все команды можно выполнять напрямую:
+- `python script.py` вместо `python script.py`
+- `dvc repro` вместо `dvc repro`
+- `pytest` вместо `pytest`
 
-## Шаг 4: Настройка pre-commit hooks
+**Деактивация окружения:**
+```bash
+deactivate
+```
+
+## Шаг 5: Настройка pre-commit hooks
+
+**Важно:** Убедитесь, что виртуальное окружение активировано!
 
 Pre-commit hooks автоматически проверяют код при каждом коммите:
 
 ```bash
 # Установка hooks
-uv run pre-commit install
+pre-commit install
 
 # Проверка всех файлов (рекомендуется после установки)
-uv run pre-commit run --all-files
+pre-commit run --all-files
 ```
 
 **Примечание:** Если hooks не установлены, можно пропустить этот шаг, но рекомендуется их использовать.
 
-## Шаг 5: Настройка DVC (Data Version Control)
+## Шаг 6: Настройка DVC (Data Version Control)
 
-### 5.1. Инициализация DVC
+### 6.1. Инициализация DVC
 
 ```bash
 # Инициализация DVC (если еще не инициализирован)
-uv run dvc init --no-scm
+dvc init --no-scm
 
 # Если DVC уже инициализирован, будет ошибка - это нормально
-# Используйте -f для переинициализации: uv run dvc init --no-scm -f
+# Используйте -f для переинициализации: dvc init --no-scm -f
 ```
 
-### 5.2. Настройка remote storage
+### 6.2. Настройка remote storage
 
 Проект поддерживает три типа remote storage:
 
 #### Local Storage (для локальной разработки)
 
 ```bash
-uv run dvc remote add local storage/local
+dvc remote add local storage/local
 ```
 
 #### MinIO (S3-совместимое хранилище через docker-compose)
@@ -121,11 +169,11 @@ docker compose ps minio
 # ./scripts/setup/setup_minio.sh
 
 # Или вручную:
-uv run dvc remote add minio s3://engineering-practices-ml/dvc
-uv run dvc remote modify minio endpointurl http://localhost:9000
-uv run dvc remote modify minio access_key_id minioadmin --local
-uv run dvc remote modify minio secret_access_key minioadmin --local
-uv run dvc remote default minio
+dvc remote add minio s3://engineering-practices-ml/dvc
+dvc remote modify minio endpointurl http://localhost:9000
+dvc remote modify minio access_key_id minioadmin --local
+dvc remote modify minio secret_access_key minioadmin --local
+dvc remote default minio
 ```
 
 **Шаг 3:** Создание bucket в MinIO:
@@ -145,21 +193,21 @@ docker compose exec -T minio sh -c "
 #### AWS S3 (для production)
 
 ```bash
-uv run dvc remote add s3 s3://engineering-practices-ml/dvc
+dvc remote add s3 s3://engineering-practices-ml/dvc
 
 # Настройка credentials через переменные окружения или .dvc/config.local
 # AWS_ACCESS_KEY_ID=your_key
 # AWS_SECRET_ACCESS_KEY=your_secret
 ```
 
-### 5.3. Проверка конфигурации DVC
+### 6.3. Проверка конфигурации DVC
 
 ```bash
 # Список всех remote storage
-uv run dvc remote list
+dvc remote list
 
 # Проверка текущего default remote
-uv run dvc remote default
+dvc remote default
 
 # Просмотр конфигурации
 cat .dvc/config
@@ -174,7 +222,7 @@ cat .dvc/config
 ./scripts/data/track_data.sh data/raw/WineQT.csv
 
 # Или вручную
-uv run dvc add data/raw/WineQT.csv
+dvc add data/raw/WineQT.csv
 git add data/raw/WineQT.csv.dvc .gitignore
 git commit -m "data: add WineQT dataset"
 ```
@@ -183,13 +231,13 @@ git commit -m "data: add WineQT dataset"
 
 ```bash
 # Запуск стадии prepare_data
-uv run dvc repro prepare_data
+dvc repro prepare_data
 
 # Проверка статуса
-uv run dvc status
+dvc status
 
 # Просмотр графа зависимостей
-uv run dvc dag
+dvc dag
 ```
 
 **Ожидаемый результат:**
@@ -205,7 +253,7 @@ uv run dvc dag
 
 ```bash
 # Запуск стадии validate_data
-uv run dvc repro validate_data
+dvc repro validate_data
 
 # Проверка результата
 cat reports/metrics/data_validation.json
@@ -223,7 +271,7 @@ cat reports/metrics/data_validation.json
 
 ```bash
 # Запуск стадии train_model (использует модель из конфигурации)
-uv run dvc repro train_model
+dvc repro train_model
 
 # Проверка результата
 ls -lh models/model.pkl
@@ -241,16 +289,16 @@ cat reports/metrics/model_metrics.json
 **Через утилиту для изменения параметров:**
 ```bash
 # Использование утилиты для изменения параметров и запуска
-uv run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
-uv run python scripts/pipeline/run_with_params.py train_model -S model_type=rf
-uv run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+python scripts/pipeline/run_with_params.py train_model -S model_type=rf
+python scripts/pipeline/run_with_params.py train_model -S model_type=gb
 ```
 
 **Или изменение params.yaml напрямую:**
 ```bash
 # Изменить model_type в params.yaml
 # Затем запустить
-uv run dvc repro train_model
+dvc repro train_model
 ```
 
 **Через конфигурационный файл:**
@@ -281,7 +329,7 @@ model:
 
 ```bash
 # Запуск стадии evaluate_model
-uv run dvc repro evaluate_model
+dvc repro evaluate_model
 
 # Проверка результата
 cat reports/metrics/evaluation.json
@@ -300,10 +348,10 @@ cat reports/plots/confusion_matrix.json
 
 ```bash
 # Запуск стадии monitor_pipeline (автоматически после evaluate_model)
-uv run dvc repro monitor_pipeline
+dvc repro monitor_pipeline
 
 # Или запуск полного пайплайна с мониторингом
-uv run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 ```
 
 **Ожидаемый результат:**
@@ -318,7 +366,7 @@ uv run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml
 cat reports/monitoring/pipeline_report.json
 
 # Или через Python
-uv run python -c "
+python -c "
 import json
 from pathlib import Path
 report = json.load(open('reports/monitoring/pipeline_report.json'))
@@ -344,35 +392,35 @@ print('Статус:', report['summary'])
 
 ```bash
 # Установить local как default remote (для локальной разработки)
-uv run dvc remote default local
+dvc remote default local
 
 # Или установить minio как default remote (если MinIO запущен)
-uv run dvc remote default minio
+dvc remote default minio
 
 # Проверить текущий default remote
-uv run dvc remote default
+dvc remote default
 ```
 
 ### Отправка данных в remote storage
 
 ```bash
 # Отправка в default remote
-uv run dvc push
+dvc push
 
 # Отправка в конкретный remote (без установки default)
-uv run dvc push --remote local
-uv run dvc push --remote minio
+dvc push --remote local
+dvc push --remote minio
 ```
 
 ### Загрузка данных из remote storage
 
 ```bash
 # Загрузка из default remote
-uv run dvc pull
+dvc pull
 
 # Загрузка из конкретного remote (без установки default)
-uv run dvc pull --remote local
-uv run dvc pull --remote minio
+dvc pull --remote local
+dvc pull --remote minio
 ```
 
 **Важно:**
@@ -397,10 +445,10 @@ uv run dvc pull --remote minio
 
 ```bash
 # Запуск всех 26 экспериментов
-uv run python scripts/experiments/run_all_experiments.py
+python scripts/experiments/run_all_experiments.py
 
 # Или запуск одного эксперимента
-uv run python scripts/experiments/run_experiment.py \
+python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 ```
@@ -409,24 +457,24 @@ uv run python scripts/experiments/run_experiment.py \
 
 ```bash
 # Список всех экспериментов
-uv run python scripts/experiments/compare_experiments.py --list
+python scripts/experiments/compare_experiments.py --list
 
 # Сравнение двух экспериментов
-uv run python scripts/experiments/compare_experiments.py \
+python scripts/experiments/compare_experiments.py \
   --compare exp_001_linear exp_002_ridge_1.0
 
 # Фильтрация по модели
-uv run python scripts/experiments/compare_experiments.py --filter-model rf
+python scripts/experiments/compare_experiments.py --filter-model rf
 
 # Фильтрация по метрикам
-uv run python scripts/experiments/compare_experiments.py \
+python scripts/experiments/compare_experiments.py \
   --min-r2 0.5 --max-rmse 0.8
 
 # Поиск экспериментов
-uv run python scripts/experiments/compare_experiments.py --search ridge
+python scripts/experiments/compare_experiments.py --search ridge
 
 # Экспорт в CSV
-uv run python scripts/experiments/compare_experiments.py --export experiments.csv
+python scripts/experiments/compare_experiments.py --export experiments.csv
 ```
 
 ### 12.4. Использование Python API для экспериментов
@@ -465,7 +513,7 @@ with experiment("exp_001", params={"alpha": 1.0}) as tracker:
 
 ```bash
 # Запуск всех стадий последовательно
-uv run dvc repro
+dvc repro
 
 # Это выполнит:
 # 1. prepare_data - подготовка данных
@@ -479,7 +527,7 @@ uv run dvc repro
 
 ```bash
 # DVC автоматически определит независимые стадии и выполнит их параллельно
-uv run dvc repro --jobs 4
+dvc repro --jobs 4
 
 # Например, validate_data и train_model могут выполняться параллельно
 # после завершения prepare_data
@@ -492,25 +540,25 @@ uv run dvc repro --jobs 4
 **Дополнительные примеры:**
 ```bash
 # Изменение нескольких параметров одновременно
-uv run python scripts/pipeline/run_with_params.py train_model \
+python scripts/pipeline/run_with_params.py train_model \
   -S model_type=ridge \
   -S enable_validation=true
 
 # Или изменение params.yaml напрямую
 # 1. Отредактировать params.yaml (изменить model_type)
-# 2. uv run dvc repro train_model
+# 2. dvc repro train_model
 ```
 
 ### 13.4. Запуск с мониторингом
 
 ```bash
 # Запуск через скрипт с полным мониторингом
-uv run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 
 # Запуск конкретных стадий с мониторингом
-uv run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor \
   --stages prepare_data validate_data train_model
@@ -533,7 +581,7 @@ uv run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Визуализация зависимостей между стадиями
-uv run dvc dag
+dvc dag
 
 # Вывод покажет:
 # - Порядок выполнения стадий
@@ -545,7 +593,7 @@ uv run dvc dag
 
 ```bash
 # Проверка, какие стадии нужно перезапустить
-uv run dvc status
+dvc status
 
 # Вывод покажет:
 # - Измененные зависимости
@@ -559,14 +607,14 @@ uv run dvc status
 
 ```bash
 # Black
-uv run black src tests scripts
+black src tests scripts
 
 # isort
-uv run isort src tests scripts
+isort src tests scripts
 
 # Ruff (check + format)
-uv run ruff check src tests scripts
-uv run ruff format src tests scripts
+ruff check src tests scripts
+ruff format src tests scripts
 
 # Или через Makefile
 make format
@@ -576,13 +624,13 @@ make format
 
 ```bash
 # MyPy (проверка типов)
-uv run mypy src
+mypy src
 
 # Bandit (проверка безопасности)
-uv run bandit -r src
+bandit -r src
 
 # Ruff (проверка стиля)
-uv run ruff check src tests scripts
+ruff check src tests scripts
 
 # Или через Makefile
 make lint
@@ -592,10 +640,10 @@ make lint
 
 ```bash
 # Запуск всех тестов
-uv run pytest
+pytest
 
 # С покрытием кода
-uv run pytest --cov=src --cov-report=html
+pytest --cov=src --cov-report=html
 
 # Или через Makefile
 make test
@@ -676,10 +724,10 @@ git commit --no-verify -m "message"
 **Решение:**
 ```bash
 # Если нужно переинициализировать
-uv run dvc init --no-scm -f
+dvc init --no-scm -f
 
 # Или просто используйте существующую конфигурацию
-uv run dvc status
+dvc status
 ```
 
 ### Проблема 2: Отсутствуют файлы для pull
@@ -689,10 +737,10 @@ uv run dvc status
 **Решение:**
 ```bash
 # Убедитесь, что все стадии pipeline выполнены
-uv run dvc repro
+dvc repro
 
 # Затем попробуйте pull снова
-uv run dvc pull
+dvc pull
 ```
 
 ### Проблема 3: MinIO не запускается
@@ -718,14 +766,14 @@ docker compose up -d minio
 **Решение:**
 ```bash
 # Переустановка hooks
-uv run pre-commit uninstall
-uv run pre-commit install
+pre-commit uninstall
+pre-commit install
 
 # Обновление hooks
-uv run pre-commit autoupdate
+pre-commit autoupdate
 
 # Проверка вручную
-uv run pre-commit run --all-files
+pre-commit run --all-files
 ```
 
 ### Проблема 5: Ошибки MyPy
@@ -733,10 +781,10 @@ uv run pre-commit run --all-files
 **Решение:**
 ```bash
 # Проверка конкретного файла
-uv run mypy src/data_science_project/experiment_tracker.py
+mypy src/data_science_project/experiment_tracker.py
 
 # Игнорирование отсутствующих импортов (если нужно)
-uv run mypy src --ignore-missing-imports
+mypy src --ignore-missing-imports
 ```
 
 ### Проблема 6: Модель не может быть добавлена в DVC
@@ -747,10 +795,10 @@ uv run mypy src --ignore-missing-imports
 Модель уже отслеживается через DVC pipeline. Используйте:
 ```bash
 # Запуск pipeline для создания модели
-uv run dvc repro train_model
+dvc repro train_model
 
 # Или принудительное обновление
-uv run dvc commit -f
+dvc commit -f
 ```
 
 ### Проблема 7: ClearML Server не запускается
@@ -816,7 +864,7 @@ docker compose logs clearml-server | tail -50
 docker compose up -d --force-recreate clearml-server
 
 # Проверьте credentials
-uv run clearml-init
+clearml-init
 
 # Или установите переменные окружения
 export CLEARML_API_HOST=http://localhost:8008
@@ -851,7 +899,7 @@ export CLEARML_API_SECRET_KEY=<your-key>
 **Проверка:**
 ```bash
 # После создания credentials, проверьте их:
-uv run clearml-init
+clearml-init
 
 # Или установите переменные окружения:
 export CLEARML_API_HOST=http://localhost:8008
@@ -865,37 +913,37 @@ export CLEARML_API_ACCESS_KEY=<your-access-key>
 
 ```bash
 # Статус pipeline
-uv run dvc status
+dvc status
 
 # Запуск всего pipeline
-uv run dvc repro
+dvc repro
 
 # Запуск конкретной стадии
-uv run dvc repro prepare_data
-uv run dvc repro validate_data
-uv run dvc repro train_model
-uv run dvc repro evaluate_model
-uv run dvc repro monitor_pipeline
+dvc repro prepare_data
+dvc repro validate_data
+dvc repro train_model
+dvc repro evaluate_model
+dvc repro monitor_pipeline
 
 # Запуск нескольких стадий
-uv run dvc repro prepare_data validate_data train_model
+dvc repro prepare_data validate_data train_model
 
 # Запуск с изменением параметров через утилиту
-uv run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
-uv run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+python scripts/pipeline/run_with_params.py train_model -S model_type=gb
 
 # Или изменение params.yaml и запуск
 # 1. Изменить model_type в params.yaml
-# 2. uv run dvc repro train_model
+# 2. dvc repro train_model
 
 # Сравнение метрик
-uv run dvc metrics diff
+dvc metrics diff
 
 # Сравнение параметров
-uv run dvc params diff
+dvc params diff
 
 # Просмотр метрик
-uv run dvc metrics show
+dvc metrics show
 ```
 
 ### UV
@@ -950,34 +998,34 @@ make docker-run
 
 ```bash
 # 1. Проверка установки зависимостей
-uv run python --version
-uv run dvc --version
+python --version
+dvc --version
 
 # 2. Проверка качества кода
-uv run pre-commit run --all-files
+pre-commit run --all-files
 
 # 3. Проверка DVC
-uv run dvc status
-uv run dvc remote list
+dvc status
+dvc remote list
 
 # 4. Проверка Docker (если используется)
 docker compose ps
 
 # 5. Запуск тестов
-uv run pytest
+pytest
 
 # 6. Запуск основного pipeline
-uv run dvc repro
+dvc repro
 
 # 7. Проверка мониторинга
 ls -lh reports/monitoring/
 cat reports/monitoring/pipeline_report.json
 
 # 8. Проверка Pydantic моделей
-uv run python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
+python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
 
 # 9. Проверка ClearML (если настроен)
-uv run python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; print('✅ ClearML OK')" 2>/dev/null || echo "⚠️ ClearML не настроен (опционально)"
+python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; print('✅ ClearML OK')" 2>/dev/null || echo "⚠️ ClearML не настроен (опционально)"
 ```
 
 ## Следующие шаги
@@ -993,13 +1041,13 @@ uv run python -c "from src.data_science_project.clearml_tracker import ClearMLTr
    - `docs/homework_5/REPORT.md` - ClearML для MLOps
 
 2. **Начните работу:**
-   - Запустите полный pipeline: `uv run dvc repro` (см. Шаг 13)
-   - Запустите с мониторингом: `uv run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor` (см. Шаг 13.4)
-   - Попробуйте разные модели: `uv run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge` (см. Шаг 8.2)
-   - Проведите эксперименты: `uv run python scripts/experiments/run_all_experiments.py` (см. Шаг 12)
-   - Изучите результаты: `uv run python scripts/experiments/compare_experiments.py --list` (см. Шаг 12.3)
+   - Запустите полный pipeline: `dvc repro` (см. Шаг 13)
+   - Запустите с мониторингом: `python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor` (см. Шаг 13.4)
+   - Попробуйте разные модели: `python scripts/pipeline/run_with_params.py train_model -S model_type=ridge` (см. Шаг 8.2)
+   - Проведите эксперименты: `python scripts/experiments/run_all_experiments.py` (см. Шаг 12)
+   - Изучите результаты: `python scripts/experiments/compare_experiments.py --list` (см. Шаг 12.3)
    - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json` (см. Шаг 10.2)
-   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `uv run python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge` (см. Шаг 17)
+   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge` (см. Шаг 17)
 
 3. **Настройте CI/CD:**
    - GitHub Actions уже настроен в `.github/workflows/ci.yml`
@@ -1074,47 +1122,20 @@ docker compose logs -f clearml-webserver
 ```bash
 PROJECT="Engineering Practices ML"
 
-# 1. Подготовка данных
-uv run clearml-task create \
+# Создать все шаблонные задачи одной командой
+python scripts/clearml/create_task_templates.py \
   --project "$PROJECT" \
-  --name "prepare_data_template" \
-  --script scripts/data/prepare_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
+  --queue default \
+  --all
 
-# 2. Валидация данных
-uv run clearml-task create \
-  --project "$PROJECT" \
-  --name "validate_data_template" \
-  --script scripts/data/validate_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
-
-# 3. Обучение модели
-uv run clearml-task create \
-  --project "$PROJECT" \
-  --name "train_model_template" \
-  --script scripts/clearml/train_with_clearml.py \
-  --working-directory . \
-  --task-type training \
-  --queue default
-
-# 4. Оценка модели
-uv run clearml-task create \
-  --project "$PROJECT" \
-  --name "evaluate_model_template" \
-  --script scripts/models/evaluate_model.py \
-  --working-directory . \
-  --task-type testing \
-  --queue default
+# Или создать задачи по одной (интерактивный режим)
+python scripts/clearml/create_task_templates.py --project "$PROJECT"
 ```
 
 Проверка:
 
 ```bash
-uv run python scripts/clearml/compare_experiments.py --list --limit 10
+python scripts/clearml/compare_experiments.py --list --limit 10
 ```
 
 Шаблонные задачи должны появиться в UI проекта. При желании их можно создать вручную в веб-интерфейсе (Create Task → Scripts → указать файл → Save as template) — главное, чтобы названия совпадали.
@@ -1125,7 +1146,7 @@ uv run python scripts/clearml/compare_experiments.py --list --limit 10
 
 ```bash
 # Через скрипт (с указанием credentials)
-uv run python scripts/clearml/init_clearml.py \
+python scripts/clearml/init_clearml.py \
   --api-host http://localhost:8008 \
   --web-host http://localhost:8080 \
   --access-key <your-access-key> \
@@ -1136,23 +1157,23 @@ export CLEARML_API_HOST=http://localhost:8008
 export CLEARML_WEB_HOST=http://localhost:8080
 export CLEARML_API_ACCESS_KEY=<your-access-key>
 export CLEARML_API_SECRET_KEY=<your-secret-key>
-uv run clearml-init
+clearml-init
 
 # Или запустите скрипт без параметров - он покажет инструкции
-uv run python scripts/clearml/init_clearml.py
+python scripts/clearml/init_clearml.py
 ```
 
 **Проверка инициализации:**
 ```bash
 # Проверьте, что ClearML может подключиться
-uv run python -c "from clearml import Task; print('✅ ClearML подключен')"
+python -c "from clearml import Task; print('✅ ClearML подключен')"
 ```
 
 ### 17.5. Запуск эксперимента с трекингом
 
 ```bash
 # Обучение модели с трекингом
-uv run python scripts/clearml/train_with_clearml.py \
+python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge \
   --experiment-name ridge_experiment_001
@@ -1164,10 +1185,10 @@ uv run python scripts/clearml/train_with_clearml.py \
 
 ```bash
 # Список экспериментов
-uv run python scripts/clearml/compare_experiments.py --list
+python scripts/clearml/compare_experiments.py --list
 
 # Сравнение
-uv run python scripts/clearml/compare_experiments.py \
+python scripts/clearml/compare_experiments.py \
   --compare <task_id_1> <task_id_2>
 ```
 
@@ -1175,10 +1196,10 @@ uv run python scripts/clearml/compare_experiments.py \
 
 ```bash
 # Список моделей
-uv run python scripts/clearml/manage_models.py --list
+python scripts/clearml/manage_models.py --list
 
 # Регистрация модели
-uv run python scripts/clearml/manage_models.py \
+python scripts/clearml/manage_models.py \
   --register models/model.pkl \
   --name wine_quality_model
 ```
@@ -1187,7 +1208,7 @@ uv run python scripts/clearml/manage_models.py \
 
 ```bash
 # Создание и запуск пайплайна
-uv run python scripts/clearml/ml_pipeline.py \
+python scripts/clearml/ml_pipeline.py \
   --model-type rf \
   --queue default
 ```
@@ -1263,18 +1284,18 @@ notifications {
 
 ## Важные замечания
 
-1. **Всегда используйте `uv run`** для команд Python/DVC, если не активировано окружение
+1. **Всегда активируйте виртуальное окружение** перед работой: `source .venv/bin/activate` (Linux/macOS) или `.venv\Scripts\activate` (Windows)
 2. **MinIO должен быть запущен** перед использованием `dvc push/pull` с MinIO remote
 3. **Выполняйте pipeline последовательно:** `prepare_data` → `validate_data` → `train_model` → `evaluate_model` → `monitor_pipeline`
-4. **Или запускайте все сразу:** `uv run dvc repro` (DVC автоматически определит порядок)
-5. **Проверяйте статус DVC** перед push/pull: `uv run dvc status`
+4. **Или запускайте все сразу:** `dvc repro` (DVC автоматически определит порядок)
+5. **Проверяйте статус DVC** перед push/pull: `dvc status`
 6. **Credentials для MinIO** хранятся в `.dvc/config.local` (не в Git)
 7. **Конфигурации валидируются через Pydantic** - проверяйте корректность параметров в `config/train_params.yaml`
 8. **Мониторинг пайплайна** автоматически сохраняет отчеты в `reports/monitoring/`
 9. **Параллельное выполнение** доступно через `dvc repro --jobs N` для независимых стадий
 10. **ClearML Server** должен быть запущен перед использованием ClearML: `docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-fileserver clearml-webserver` (см. Шаг 17.1)
 11. **ClearML credentials** настраиваются через веб-интерфейс (http://localhost:8080) или переменные окружения
-12. **Для ClearML** используйте `uv run python scripts/clearml/` для всех скриптов
+12. **Для ClearML** используйте `python scripts/clearml/` для всех скриптов (в активированном окружении)
 
 ---
 

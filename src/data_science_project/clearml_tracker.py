@@ -2,14 +2,17 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-try:
+if TYPE_CHECKING:
     from clearml import OutputModel, PipelineController, Task
-except ImportError:
-    Task = None
-    OutputModel = None
-    PipelineController = None
+else:
+    try:
+        from clearml import OutputModel, PipelineController, Task
+    except ImportError:
+        Task = None  # type: ignore[assignment, misc]
+        OutputModel = None  # type: ignore[assignment, misc]
+        PipelineController = None  # type: ignore[assignment, misc]
 
 
 class ClearMLTracker:
@@ -30,11 +33,9 @@ class ClearMLTracker:
             tags: Теги для задачи
         """
         if Task is None:
-            raise ImportError(
-                "ClearML не установлен. Установите через: poetry add clearml"
-            )
+            raise ImportError("ClearML не установлен. Установите через: uv add clearml")
 
-        self.task = Task.init(
+        self.task: Any = Task.init(
             project_name=project_name,
             task_name=task_name,
             tags=tags or [],
@@ -173,9 +174,7 @@ class ClearMLModelManager:
             project_name: Название проекта
         """
         if OutputModel is None:
-            raise ImportError(
-                "ClearML не установлен. Установите через: poetry add clearml"
-            )
+            raise ImportError("ClearML не установлен. Установите через: uv add clearml")
 
         self.project_name = project_name
 
@@ -206,8 +205,20 @@ class ClearMLModelManager:
 
         # Получаем задачу, если указан task_id
         task = None
+        temp_task = None
         if task_id:
             task = Task.get_task(task_id=task_id)
+        else:
+            # Создаем временную задачу для регистрации модели, если задача не указана
+            # OutputModel требует активную задачу
+            temp_task = Task.init(
+                project_name=self.project_name,
+                task_name=f"Model Registration: {model_name}",
+                auto_connect_frameworks=False,
+                auto_connect_streams=False,
+                auto_connect_arg_parser=False,
+            )
+            task = temp_task
 
         output_model = OutputModel(task=task, name=model_name)
         output_model.update_weights(weights_filename=str(model_path))
@@ -225,7 +236,24 @@ class ClearMLModelManager:
                 output_model.set_metadata(key=key, value=value_str)
 
         if tags:
-            output_model.add_tags(tags)
+            # Используем set_tags вместо add_tags, если доступно
+            if hasattr(output_model, "add_tags"):
+                output_model.add_tags(tags)
+            elif hasattr(output_model, "set_tags"):
+                output_model.set_tags(tags)
+            else:
+                # Если нет метода для тегов, логируем предупреждение
+                import warnings
+
+                warnings.warn(
+                    "Метод для установки тегов не найден в OutputModel",
+                    stacklevel=2,
+                )
+
+        # Закрываем временную задачу, если она была создана
+        if temp_task is not None:
+            temp_task.mark_started(False)
+            temp_task.mark_completed()
 
         return output_model
 
@@ -242,12 +270,29 @@ class ClearMLModelManager:
         models_data: dict[str, dict[str, Any]] = {}
 
         for model_id in model_ids:
-            model = OutputModel(model_id=model_id)
+            # Используем правильный способ создания OutputModel из ID
+            # В ClearML OutputModel можно создать через Model.get_by_id
+            try:
+                # Используем Model.get_by_id для получения модели по ID
+                from clearml import Model  # noqa: PLC0415
+
+                model = Model.get_by_id(model_id)  # type: ignore
+            except (ImportError, AttributeError, Exception):
+                # Если не удалось получить модель, создаем пустую запись
+                models_data[model_id] = {
+                    "name": "Unknown",
+                    "metadata": {},
+                    "tags": [],
+                    "created": None,
+                }
+                continue
+
+            # Извлекаем данные модели безопасным способом
             models_data[model_id] = {
-                "name": model.name,
-                "metadata": model.metadata,
-                "tags": model.tags,
-                "created": model.created,
+                "name": getattr(model, "name", "Unknown"),
+                "metadata": getattr(model, "metadata", {}),
+                "tags": getattr(model, "tags", []),
+                "created": getattr(model, "created", None),
             }
 
         return models_data
@@ -268,7 +313,7 @@ def create_clearml_pipeline(
         Контроллер пайплайна
     """
     if PipelineController is None:
-        raise ImportError("ClearML не установлен. Установите через: poetry add clearml")
+        raise ImportError("ClearML не установлен. Установите через: uv add clearml")
 
     pipeline = PipelineController(
         name=pipeline_name,

@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
 # Install UV
 RUN pip install --no-cache-dir uv
 
-# Copy dependency files
-COPY pyproject.toml uv.lock* ./
+# Copy dependency files and README (needed for package build)
+COPY pyproject.toml uv.lock* README.md ./
 
 # Install dependencies
 RUN uv sync --frozen --no-dev || uv sync --no-dev
@@ -24,7 +24,7 @@ COPY . .
 RUN uv sync --frozen || uv sync
 
 # Set Python path
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/src
 
 # Initialize DVC (if not already initialized)
 # Note: DVC remote storage should be configured separately
