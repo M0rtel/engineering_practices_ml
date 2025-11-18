@@ -10,7 +10,7 @@ venv: ## Создать виртуальное окружение
 	@echo "Активируйте его: source .venv/bin/activate"
 
 install: ## Установить зависимости через UV (требует активированного venv)
-	uv sync
+	uv sync --all-extras
 
 format: ## Форматировать код (Black, isort, Ruff)
 	uv run black src tests scripts main.py
