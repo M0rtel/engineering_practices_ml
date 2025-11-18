@@ -10,7 +10,7 @@ from typing import Any
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from clearml import OutputModel  # noqa: E402
+from clearml import Model, OutputModel  # noqa: E402
 
 from src.data_science_project.clearml_tracker import ClearMLModelManager  # noqa: E402
 
@@ -55,19 +55,28 @@ def list_models(project_name: str = "Engineering Practices ML") -> list[dict[str
     Returns:
         Список моделей
     """
-    models = OutputModel.query_models(project_name=project_name)
+    # Используем Model.query_models() для получения списка моделей
+    try:
+        models = Model.query_models(project_name=project_name)
+    except Exception as e:
+        print(f"❌ Ошибка при получении списка моделей: {e}")
+        return []
 
     models_list = []
     for model in models:
-        models_list.append(
-            {
-                "id": model.id,
-                "name": model.name,
-                "created": str(model.created),
-                "tags": model.tags,
-                "metadata": model.metadata,
-            }
-        )
+        try:
+            models_list.append(
+                {
+                    "id": getattr(model, "id", "Unknown"),
+                    "name": getattr(model, "name", "Unknown"),
+                    "created": str(getattr(model, "created", "")),
+                    "tags": getattr(model, "tags", []),
+                    "metadata": getattr(model, "metadata", {}),
+                }
+            )
+        except Exception:
+            # Пропускаем модели с ошибками
+            continue  # nosec B112
 
     return models_list
 
@@ -173,12 +182,12 @@ def main() -> None:
             print("  Нет моделей")
             return
 
-        for model in models:
-            print(f"\n  ID: {model['id']}")
-            print(f"  Название: {model['name']}")
-            print(f"  Создан: {model['created']}")
-            if model.get("tags"):
-                print(f"  Теги: {', '.join(model['tags'])}")
+        for model_dict in models:
+            print(f"\n  ID: {model_dict['id']}")
+            print(f"  Название: {model_dict['name']}")
+            print(f"  Создан: {model_dict['created']}")
+            if model_dict.get("tags"):
+                print(f"  Теги: {', '.join(model_dict['tags'])}")
 
         if args.export:
             with open(args.export, "w") as f:

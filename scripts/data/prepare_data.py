@@ -59,9 +59,11 @@ def prepare_data(config_file: Path) -> None:
         df,
         test_size=data_config.test_size,
         random_state=data_config.random_state,
-        stratify=df[data_config.target_column]
-        if data_config.stratify and data_config.target_column in df.columns
-        else None,
+        stratify=(
+            df[data_config.target_column]
+            if data_config.stratify and data_config.target_column in df.columns
+            else None
+        ),
     )
 
     # Сохраняем обработанные данные

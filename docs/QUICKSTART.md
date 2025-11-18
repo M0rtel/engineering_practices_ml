@@ -5,7 +5,7 @@
 ## Предварительные требования
 
 - **Python 3.10+** - проверьте версию: `python3 --version`
-- **Poetry** - менеджер зависимостей (установится автоматически или вручную)
+- **UV** - быстрый менеджер пакетов для Python (написан на Rust)
 - **Git** - система контроля версий
 - **Docker и Docker Compose** (опционально, для MinIO и контейнеризации)
 
@@ -16,13 +16,13 @@ git clone <repository-url>
 cd engineering_practices_ml
 ```
 
-## Шаг 2: Установка Poetry
+## Шаг 2: Установка UV
 
-Если Poetry не установлен:
+Если UV не установлен:
 
 ```bash
 # Автоматическая установка (рекомендуется)
-curl -sSL https://install.python-poetry.org | python3 -
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Добавить в PATH для текущей сессии
 export PATH="$HOME/.local/bin:$PATH"
@@ -32,78 +32,122 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
 # Проверка установки
-poetry --version
+uv --version
 ```
 
 Альтернативно через pip:
 ```bash
-pip install poetry
+pip install uv
 ```
 
-## Шаг 3: Установка зависимостей проекта
+## Шаг 3: Создание виртуального окружения
+
+UV может работать двумя способами:
+1. **С явным виртуальным окружением** (рекомендуется) - создается в `.venv/`
+2. **Без явного окружения** - UV управляет окружением автоматически
+
+### Рекомендуемый способ: Явное виртуальное окружение
+
+```bash
+# Создание виртуального окружения
+uv venv
+
+# Активация виртуального окружения
+# Для Linux/macOS:
+source .venv/bin/activate
+
+# Для Windows:
+# .venv\Scripts\activate
+```
+
+**Проверка активации:**
+```bash
+# После активации в начале строки терминала должно появиться (.venv)
+which python  # Должен показать путь к .venv/bin/python
+python --version  # Должен показать Python 3.10+
+```
+
+## Шаг 4: Установка зависимостей проекта
 
 ### Вариант A: Автоматическая настройка (рекомендуется)
 
 ```bash
-# Запустить скрипт автоматической настройки (если существует)
+# Запустить скрипт автоматической настройки
 ./scripts/setup/setup.sh
 
-# Или выполнить шаги вручную (см. Вариант B)
+# Скрипт автоматически:
+# 1. Создаст виртуальное окружение (.venv)
+# 2. Установит все зависимости
+# 3. Настроит pre-commit hooks
 ```
 
-**Примечание:** Скрипт `setup.sh` может отсутствовать. В этом случае используйте Вариант B.
+**Примечание:** После выполнения скрипта активируйте виртуальное окружение:
+```bash
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate  # Windows
+```
 
 ### Вариант B: Ручная установка
 
 ```bash
-# Установка зависимостей через Poetry
-poetry install
+# Убедитесь, что виртуальное окружение активировано
+# (см. Шаг 3)
 
-# Активация виртуального окружения
-poetry shell
+# Установка зависимостей через UV (включая dev зависимости)
+uv sync --all-extras
 
 # Проверка установки
-poetry env info
+python --version
+pip list
 ```
 
-**Важно:** Все последующие команды должны выполняться либо:
-- В активированном окружении Poetry (`poetry shell`)
-- Или с префиксом `poetry run` (например, `poetry run python`)
+**Важно:** После активации виртуального окружения все команды можно выполнять напрямую:
+- `python script.py` вместо `python script.py`
+- `dvc repro` вместо `dvc repro`
+- `pytest` вместо `pytest`
 
-## Шаг 4: Настройка pre-commit hooks
+**Деактивация окружения:**
+```bash
+deactivate
+```
+
+## Шаг 5: Настройка pre-commit hooks
+
+**Важно:** Убедитесь, что виртуальное окружение активировано!
 
 Pre-commit hooks автоматически проверяют код при каждом коммите:
 
 ```bash
 # Установка hooks
-poetry run pre-commit install
+pre-commit install
 
 # Проверка всех файлов (рекомендуется после установки)
-poetry run pre-commit run --all-files
+pre-commit run --all-files
 ```
 
 **Примечание:** Если hooks не установлены, можно пропустить этот шаг, но рекомендуется их использовать.
 
-## Шаг 5: Настройка DVC (Data Version Control)
+## Шаг 6: Настройка DVC (Data Version Control)
 
-### 5.1. Инициализация DVC
+### 6.1. Инициализация DVC
 
 ```bash
 # Инициализация DVC (если еще не инициализирован)
-poetry run dvc init --no-scm
+dvc init --no-scm
 
 # Если DVC уже инициализирован, будет ошибка - это нормально
-# Используйте -f для переинициализации: poetry run dvc init --no-scm -f
+# Используйте -f для переинициализации: dvc init --no-scm -f
 ```
 
-### 5.2. Настройка remote storage
+### 6.2. Настройка remote storage
 
 Проект поддерживает три типа remote storage:
 
 #### Local Storage (для локальной разработки)
 
 ```bash
-poetry run dvc remote add local storage/local
+dvc remote add local storage/local
 ```
 
 #### MinIO (S3-совместимое хранилище через docker-compose)
@@ -125,11 +169,11 @@ docker compose ps minio
 # ./scripts/setup/setup_minio.sh
 
 # Или вручную:
-poetry run dvc remote add minio s3://engineering-practices-ml/dvc
-poetry run dvc remote modify minio endpointurl http://localhost:9000
-poetry run dvc remote modify minio access_key_id minioadmin --local
-poetry run dvc remote modify minio secret_access_key minioadmin --local
-poetry run dvc remote default minio
+dvc remote add minio s3://engineering-practices-ml/dvc
+dvc remote modify minio endpointurl http://localhost:9000
+dvc remote modify minio access_key_id minioadmin --local
+dvc remote modify minio secret_access_key minioadmin --local
+dvc remote default minio
 ```
 
 **Шаг 3:** Создание bucket в MinIO:
@@ -149,21 +193,21 @@ docker compose exec -T minio sh -c "
 #### AWS S3 (для production)
 
 ```bash
-poetry run dvc remote add s3 s3://engineering-practices-ml/dvc
+dvc remote add s3 s3://engineering-practices-ml/dvc
 
 # Настройка credentials через переменные окружения или .dvc/config.local
 # AWS_ACCESS_KEY_ID=your_key
 # AWS_SECRET_ACCESS_KEY=your_secret
 ```
 
-### 5.3. Проверка конфигурации DVC
+### 6.3. Проверка конфигурации DVC
 
 ```bash
 # Список всех remote storage
-poetry run dvc remote list
+dvc remote list
 
 # Проверка текущего default remote
-poetry run dvc remote default
+dvc remote default
 
 # Просмотр конфигурации
 cat .dvc/config
@@ -178,7 +222,7 @@ cat .dvc/config
 ./scripts/data/track_data.sh data/raw/WineQT.csv
 
 # Или вручную
-poetry run dvc add data/raw/WineQT.csv
+dvc add data/raw/WineQT.csv
 git add data/raw/WineQT.csv.dvc .gitignore
 git commit -m "data: add WineQT dataset"
 ```
@@ -187,13 +231,13 @@ git commit -m "data: add WineQT dataset"
 
 ```bash
 # Запуск стадии prepare_data
-poetry run dvc repro prepare_data
+dvc repro prepare_data
 
 # Проверка статуса
-poetry run dvc status
+dvc status
 
 # Просмотр графа зависимостей
-poetry run dvc dag
+dvc dag
 ```
 
 **Ожидаемый результат:**
@@ -209,7 +253,7 @@ poetry run dvc dag
 
 ```bash
 # Запуск стадии validate_data
-poetry run dvc repro validate_data
+dvc repro validate_data
 
 # Проверка результата
 cat reports/metrics/data_validation.json
@@ -227,7 +271,7 @@ cat reports/metrics/data_validation.json
 
 ```bash
 # Запуск стадии train_model (использует модель из конфигурации)
-poetry run dvc repro train_model
+dvc repro train_model
 
 # Проверка результата
 ls -lh models/model.pkl
@@ -245,16 +289,16 @@ cat reports/metrics/model_metrics.json
 **Через утилиту для изменения параметров:**
 ```bash
 # Использование утилиты для изменения параметров и запуска
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=rf
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+python scripts/pipeline/run_with_params.py train_model -S model_type=rf
+python scripts/pipeline/run_with_params.py train_model -S model_type=gb
 ```
 
 **Или изменение params.yaml напрямую:**
 ```bash
 # Изменить model_type в params.yaml
 # Затем запустить
-poetry run dvc repro train_model
+dvc repro train_model
 ```
 
 **Через конфигурационный файл:**
@@ -285,7 +329,7 @@ model:
 
 ```bash
 # Запуск стадии evaluate_model
-poetry run dvc repro evaluate_model
+dvc repro evaluate_model
 
 # Проверка результата
 cat reports/metrics/evaluation.json
@@ -304,10 +348,10 @@ cat reports/plots/confusion_matrix.json
 
 ```bash
 # Запуск стадии monitor_pipeline (автоматически после evaluate_model)
-poetry run dvc repro monitor_pipeline
+dvc repro monitor_pipeline
 
 # Или запуск полного пайплайна с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 ```
 
 **Ожидаемый результат:**
@@ -322,7 +366,7 @@ poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.
 cat reports/monitoring/pipeline_report.json
 
 # Или через Python
-poetry run python -c "
+python -c "
 import json
 from pathlib import Path
 report = json.load(open('reports/monitoring/pipeline_report.json'))
@@ -348,35 +392,35 @@ print('Статус:', report['summary'])
 
 ```bash
 # Установить local как default remote (для локальной разработки)
-poetry run dvc remote default local
+dvc remote default local
 
 # Или установить minio как default remote (если MinIO запущен)
-poetry run dvc remote default minio
+dvc remote default minio
 
 # Проверить текущий default remote
-poetry run dvc remote default
+dvc remote default
 ```
 
 ### Отправка данных в remote storage
 
 ```bash
 # Отправка в default remote
-poetry run dvc push
+dvc push
 
 # Отправка в конкретный remote (без установки default)
-poetry run dvc push --remote local
-poetry run dvc push --remote minio
+dvc push --remote local
+dvc push --remote minio
 ```
 
 ### Загрузка данных из remote storage
 
 ```bash
 # Загрузка из default remote
-poetry run dvc pull
+dvc pull
 
 # Загрузка из конкретного remote (без установки default)
-poetry run dvc pull --remote local
-poetry run dvc pull --remote minio
+dvc pull --remote local
+dvc pull --remote minio
 ```
 
 **Важно:**
@@ -401,10 +445,10 @@ poetry run dvc pull --remote minio
 
 ```bash
 # Запуск всех 26 экспериментов
-poetry run python scripts/experiments/run_all_experiments.py
+python scripts/experiments/run_all_experiments.py
 
 # Или запуск одного эксперимента
-poetry run python scripts/experiments/run_experiment.py \
+python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 ```
@@ -413,24 +457,24 @@ poetry run python scripts/experiments/run_experiment.py \
 
 ```bash
 # Список всех экспериментов
-poetry run python scripts/experiments/compare_experiments.py --list
+python scripts/experiments/compare_experiments.py --list
 
 # Сравнение двух экспериментов
-poetry run python scripts/experiments/compare_experiments.py \
+python scripts/experiments/compare_experiments.py \
   --compare exp_001_linear exp_002_ridge_1.0
 
 # Фильтрация по модели
-poetry run python scripts/experiments/compare_experiments.py --filter-model rf
+python scripts/experiments/compare_experiments.py --filter-model rf
 
 # Фильтрация по метрикам
-poetry run python scripts/experiments/compare_experiments.py \
+python scripts/experiments/compare_experiments.py \
   --min-r2 0.5 --max-rmse 0.8
 
 # Поиск экспериментов
-poetry run python scripts/experiments/compare_experiments.py --search ridge
+python scripts/experiments/compare_experiments.py --search ridge
 
 # Экспорт в CSV
-poetry run python scripts/experiments/compare_experiments.py --export experiments.csv
+python scripts/experiments/compare_experiments.py --export experiments.csv
 ```
 
 ### 12.4. Использование Python API для экспериментов
@@ -469,7 +513,7 @@ with experiment("exp_001", params={"alpha": 1.0}) as tracker:
 
 ```bash
 # Запуск всех стадий последовательно
-poetry run dvc repro
+dvc repro
 
 # Это выполнит:
 # 1. prepare_data - подготовка данных
@@ -483,7 +527,7 @@ poetry run dvc repro
 
 ```bash
 # DVC автоматически определит независимые стадии и выполнит их параллельно
-poetry run dvc repro --jobs 4
+dvc repro --jobs 4
 
 # Например, validate_data и train_model могут выполняться параллельно
 # после завершения prepare_data
@@ -496,25 +540,25 @@ poetry run dvc repro --jobs 4
 **Дополнительные примеры:**
 ```bash
 # Изменение нескольких параметров одновременно
-poetry run python scripts/pipeline/run_with_params.py train_model \
+python scripts/pipeline/run_with_params.py train_model \
   -S model_type=ridge \
   -S enable_validation=true
 
 # Или изменение params.yaml напрямую
 # 1. Отредактировать params.yaml (изменить model_type)
-# 2. poetry run dvc repro train_model
+# 2. dvc repro train_model
 ```
 
 ### 13.4. Запуск с мониторингом
 
 ```bash
 # Запуск через скрипт с полным мониторингом
-poetry run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 
 # Запуск конкретных стадий с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor \
   --stages prepare_data validate_data train_model
@@ -537,7 +581,7 @@ poetry run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Визуализация зависимостей между стадиями
-poetry run dvc dag
+dvc dag
 
 # Вывод покажет:
 # - Порядок выполнения стадий
@@ -549,7 +593,7 @@ poetry run dvc dag
 
 ```bash
 # Проверка, какие стадии нужно перезапустить
-poetry run dvc status
+dvc status
 
 # Вывод покажет:
 # - Измененные зависимости
@@ -563,14 +607,14 @@ poetry run dvc status
 
 ```bash
 # Black
-poetry run black src tests scripts
+black src tests scripts
 
 # isort
-poetry run isort src tests scripts
+isort src tests scripts
 
 # Ruff (check + format)
-poetry run ruff check src tests scripts
-poetry run ruff format src tests scripts
+ruff check src tests scripts
+ruff format src tests scripts
 
 # Или через Makefile
 make format
@@ -580,13 +624,13 @@ make format
 
 ```bash
 # MyPy (проверка типов)
-poetry run mypy src
+mypy src
 
 # Bandit (проверка безопасности)
-poetry run bandit -r src
+bandit -r src
 
 # Ruff (проверка стиля)
-poetry run ruff check src tests scripts
+ruff check src tests scripts
 
 # Или через Makefile
 make lint
@@ -596,10 +640,10 @@ make lint
 
 ```bash
 # Запуск всех тестов
-poetry run pytest
+pytest
 
 # С покрытием кода
-poetry run pytest --cov=src --cov-report=html
+pytest --cov=src --cov-report=html
 
 # Или через Makefile
 make test
@@ -680,10 +724,10 @@ git commit --no-verify -m "message"
 **Решение:**
 ```bash
 # Если нужно переинициализировать
-poetry run dvc init --no-scm -f
+dvc init --no-scm -f
 
 # Или просто используйте существующую конфигурацию
-poetry run dvc status
+dvc status
 ```
 
 ### Проблема 2: Отсутствуют файлы для pull
@@ -693,10 +737,10 @@ poetry run dvc status
 **Решение:**
 ```bash
 # Убедитесь, что все стадии pipeline выполнены
-poetry run dvc repro
+dvc repro
 
 # Затем попробуйте pull снова
-poetry run dvc pull
+dvc pull
 ```
 
 ### Проблема 3: MinIO не запускается
@@ -722,14 +766,14 @@ docker compose up -d minio
 **Решение:**
 ```bash
 # Переустановка hooks
-poetry run pre-commit uninstall
-poetry run pre-commit install
+pre-commit uninstall
+pre-commit install
 
 # Обновление hooks
-poetry run pre-commit autoupdate
+pre-commit autoupdate
 
 # Проверка вручную
-poetry run pre-commit run --all-files
+pre-commit run --all-files
 ```
 
 ### Проблема 5: Ошибки MyPy
@@ -737,10 +781,10 @@ poetry run pre-commit run --all-files
 **Решение:**
 ```bash
 # Проверка конкретного файла
-poetry run mypy src/data_science_project/experiment_tracker.py
+mypy src/data_science_project/experiment_tracker.py
 
 # Игнорирование отсутствующих импортов (если нужно)
-poetry run mypy src --ignore-missing-imports
+mypy src --ignore-missing-imports
 ```
 
 ### Проблема 6: Модель не может быть добавлена в DVC
@@ -751,10 +795,10 @@ poetry run mypy src --ignore-missing-imports
 Модель уже отслеживается через DVC pipeline. Используйте:
 ```bash
 # Запуск pipeline для создания модели
-poetry run dvc repro train_model
+dvc repro train_model
 
 # Или принудительное обновление
-poetry run dvc commit -f
+dvc commit -f
 ```
 
 ### Проблема 7: ClearML Server не запускается
@@ -820,7 +864,7 @@ docker compose logs clearml-server | tail -50
 docker compose up -d --force-recreate clearml-server
 
 # Проверьте credentials
-poetry run clearml-init
+clearml-init
 
 # Или установите переменные окружения
 export CLEARML_API_HOST=http://localhost:8008
@@ -855,7 +899,7 @@ export CLEARML_API_SECRET_KEY=<your-key>
 **Проверка:**
 ```bash
 # После создания credentials, проверьте их:
-poetry run clearml-init
+clearml-init
 
 # Или установите переменные окружения:
 export CLEARML_API_HOST=http://localhost:8008
@@ -869,56 +913,56 @@ export CLEARML_API_ACCESS_KEY=<your-access-key>
 
 ```bash
 # Статус pipeline
-poetry run dvc status
+dvc status
 
 # Запуск всего pipeline
-poetry run dvc repro
+dvc repro
 
 # Запуск конкретной стадии
-poetry run dvc repro prepare_data
-poetry run dvc repro validate_data
-poetry run dvc repro train_model
-poetry run dvc repro evaluate_model
-poetry run dvc repro monitor_pipeline
+dvc repro prepare_data
+dvc repro validate_data
+dvc repro train_model
+dvc repro evaluate_model
+dvc repro monitor_pipeline
 
 # Запуск нескольких стадий
-poetry run dvc repro prepare_data validate_data train_model
+dvc repro prepare_data validate_data train_model
 
 # Запуск с изменением параметров через утилиту
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=gb
+python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+python scripts/pipeline/run_with_params.py train_model -S model_type=gb
 
 # Или изменение params.yaml и запуск
 # 1. Изменить model_type в params.yaml
-# 2. poetry run dvc repro train_model
+# 2. dvc repro train_model
 
 # Сравнение метрик
-poetry run dvc metrics diff
+dvc metrics diff
 
 # Сравнение параметров
-poetry run dvc params diff
+dvc params diff
 
 # Просмотр метрик
-poetry run dvc metrics show
+dvc metrics show
 ```
 
-### Poetry
+### UV
 
 ```bash
 # Информация об окружении
-poetry env info
+uv --version
 
 # Список зависимостей
-poetry show
+uv pip list
 
 # Обновление зависимостей
-poetry update
+uv sync --upgrade
 
 # Добавление новой зависимости
-poetry add package-name
+uv add package-name
 
 # Добавление dev зависимости
-poetry add --group dev package-name
+uv add --group dev package-name
 ```
 
 ### Makefile
@@ -954,34 +998,34 @@ make docker-run
 
 ```bash
 # 1. Проверка установки зависимостей
-poetry run python --version
-poetry run dvc --version
+python --version
+dvc --version
 
 # 2. Проверка качества кода
-poetry run pre-commit run --all-files
+pre-commit run --all-files
 
 # 3. Проверка DVC
-poetry run dvc status
-poetry run dvc remote list
+dvc status
+dvc remote list
 
 # 4. Проверка Docker (если используется)
 docker compose ps
 
 # 5. Запуск тестов
-poetry run pytest
+pytest
 
 # 6. Запуск основного pipeline
-poetry run dvc repro
+dvc repro
 
 # 7. Проверка мониторинга
 ls -lh reports/monitoring/
 cat reports/monitoring/pipeline_report.json
 
 # 8. Проверка Pydantic моделей
-poetry run python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
+python -c "from src.data_science_project.config_models import TrainingConfig; print('✅ Pydantic models OK')"
 
 # 9. Проверка ClearML (если настроен)
-poetry run python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; print('✅ ClearML OK')" 2>/dev/null || echo "⚠️ ClearML не настроен (опционально)"
+python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; print('✅ ClearML OK')" 2>/dev/null || echo "⚠️ ClearML не настроен (опционально)"
 ```
 
 ## Следующие шаги
@@ -997,13 +1041,13 @@ poetry run python -c "from src.data_science_project.clearml_tracker import Clear
    - `docs/homework_5/REPORT.md` - ClearML для MLOps
 
 2. **Начните работу:**
-   - Запустите полный pipeline: `poetry run dvc repro` (см. Шаг 13)
-   - Запустите с мониторингом: `poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor` (см. Шаг 13.4)
-   - Попробуйте разные модели: `poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge` (см. Шаг 8.2)
-   - Проведите эксперименты: `poetry run python scripts/experiments/run_all_experiments.py` (см. Шаг 12)
-   - Изучите результаты: `poetry run python scripts/experiments/compare_experiments.py --list` (см. Шаг 12.3)
+   - Запустите полный pipeline: `dvc repro` (см. Шаг 13)
+   - Запустите с мониторингом: `python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor` (см. Шаг 13.4)
+   - Попробуйте разные модели: `python scripts/pipeline/run_with_params.py train_model -S model_type=ridge` (см. Шаг 8.2)
+   - Проведите эксперименты: `python scripts/experiments/run_all_experiments.py` (см. Шаг 12)
+   - Изучите результаты: `python scripts/experiments/compare_experiments.py --list` (см. Шаг 12.3)
    - Просмотрите отчет мониторинга: `cat reports/monitoring/pipeline_report.json` (см. Шаг 10.2)
-   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `poetry run python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge` (см. Шаг 17)
+   - (Опционально) Настройте ClearML и запустите эксперименты с трекингом: `python scripts/clearml/train_with_clearml.py --config config/train_params.yaml --model-type ridge` (см. Шаг 17)
 
 3. **Настройте CI/CD:**
    - GitHub Actions уже настроен в `.github/workflows/ci.yml`
@@ -1078,47 +1122,20 @@ docker compose logs -f clearml-webserver
 ```bash
 PROJECT="Engineering Practices ML"
 
-# 1. Подготовка данных
-poetry run clearml-task create \
+# Создать все шаблонные задачи одной командой
+python scripts/clearml/create_task_templates.py \
   --project "$PROJECT" \
-  --name "prepare_data_template" \
-  --script scripts/data/prepare_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
+  --queue default \
+  --all
 
-# 2. Валидация данных
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "validate_data_template" \
-  --script scripts/data/validate_data.py \
-  --working-directory . \
-  --task-type data_processing \
-  --queue default
-
-# 3. Обучение модели
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "train_model_template" \
-  --script scripts/clearml/train_with_clearml.py \
-  --working-directory . \
-  --task-type training \
-  --queue default
-
-# 4. Оценка модели
-poetry run clearml-task create \
-  --project "$PROJECT" \
-  --name "evaluate_model_template" \
-  --script scripts/models/evaluate_model.py \
-  --working-directory . \
-  --task-type testing \
-  --queue default
+# Или создать задачи по одной (интерактивный режим)
+python scripts/clearml/create_task_templates.py --project "$PROJECT"
 ```
 
 Проверка:
 
 ```bash
-poetry run python scripts/clearml/compare_experiments.py --list --limit 10
+python scripts/clearml/compare_experiments.py --list --limit 10
 ```
 
 Шаблонные задачи должны появиться в UI проекта. При желании их можно создать вручную в веб-интерфейсе (Create Task → Scripts → указать файл → Save as template) — главное, чтобы названия совпадали.
@@ -1129,7 +1146,7 @@ poetry run python scripts/clearml/compare_experiments.py --list --limit 10
 
 ```bash
 # Через скрипт (с указанием credentials)
-poetry run python scripts/clearml/init_clearml.py \
+python scripts/clearml/init_clearml.py \
   --api-host http://localhost:8008 \
   --web-host http://localhost:8080 \
   --access-key <your-access-key> \
@@ -1140,23 +1157,23 @@ export CLEARML_API_HOST=http://localhost:8008
 export CLEARML_WEB_HOST=http://localhost:8080
 export CLEARML_API_ACCESS_KEY=<your-access-key>
 export CLEARML_API_SECRET_KEY=<your-secret-key>
-poetry run clearml-init
+clearml-init
 
 # Или запустите скрипт без параметров - он покажет инструкции
-poetry run python scripts/clearml/init_clearml.py
+python scripts/clearml/init_clearml.py
 ```
 
 **Проверка инициализации:**
 ```bash
 # Проверьте, что ClearML может подключиться
-poetry run python -c "from clearml import Task; print('✅ ClearML подключен')"
+python -c "from clearml import Task; print('✅ ClearML подключен')"
 ```
 
 ### 17.5. Запуск эксперимента с трекингом
 
 ```bash
 # Обучение модели с трекингом
-poetry run python scripts/clearml/train_with_clearml.py \
+python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge \
   --experiment-name ridge_experiment_001
@@ -1168,10 +1185,10 @@ poetry run python scripts/clearml/train_with_clearml.py \
 
 ```bash
 # Список экспериментов
-poetry run python scripts/clearml/compare_experiments.py --list
+python scripts/clearml/compare_experiments.py --list
 
 # Сравнение
-poetry run python scripts/clearml/compare_experiments.py \
+python scripts/clearml/compare_experiments.py \
   --compare <task_id_1> <task_id_2>
 ```
 
@@ -1179,10 +1196,10 @@ poetry run python scripts/clearml/compare_experiments.py \
 
 ```bash
 # Список моделей
-poetry run python scripts/clearml/manage_models.py --list
+python scripts/clearml/manage_models.py --list
 
 # Регистрация модели
-poetry run python scripts/clearml/manage_models.py \
+python scripts/clearml/manage_models.py \
   --register models/model.pkl \
   --name wine_quality_model
 ```
@@ -1191,7 +1208,7 @@ poetry run python scripts/clearml/manage_models.py \
 
 ```bash
 # Создание и запуск пайплайна
-poetry run python scripts/clearml/ml_pipeline.py \
+python scripts/clearml/ml_pipeline.py \
   --model-type rf \
   --queue default
 ```
@@ -1262,23 +1279,23 @@ notifications {
 - **Документация проекта:** `docs/`
 - **GitHub Issues:** создайте issue в репозитории
 - **DVC документация:** https://dvc.org/doc
-- **Poetry документация:** https://python-poetry.org/docs/
+- **UV документация:** https://docs.astral.sh/uv/
 - **ClearML документация:** https://clear.ml/docs
 
 ## Важные замечания
 
-1. **Всегда используйте `poetry run`** для команд Python/DVC, если не активировано окружение
+1. **Всегда активируйте виртуальное окружение** перед работой: `source .venv/bin/activate` (Linux/macOS) или `.venv\Scripts\activate` (Windows)
 2. **MinIO должен быть запущен** перед использованием `dvc push/pull` с MinIO remote
 3. **Выполняйте pipeline последовательно:** `prepare_data` → `validate_data` → `train_model` → `evaluate_model` → `monitor_pipeline`
-4. **Или запускайте все сразу:** `poetry run dvc repro` (DVC автоматически определит порядок)
-5. **Проверяйте статус DVC** перед push/pull: `poetry run dvc status`
+4. **Или запускайте все сразу:** `dvc repro` (DVC автоматически определит порядок)
+5. **Проверяйте статус DVC** перед push/pull: `dvc status`
 6. **Credentials для MinIO** хранятся в `.dvc/config.local` (не в Git)
 7. **Конфигурации валидируются через Pydantic** - проверяйте корректность параметров в `config/train_params.yaml`
 8. **Мониторинг пайплайна** автоматически сохраняет отчеты в `reports/monitoring/`
 9. **Параллельное выполнение** доступно через `dvc repro --jobs N` для независимых стадий
 10. **ClearML Server** должен быть запущен перед использованием ClearML: `docker compose up -d clearml-mongo clearml-elastic clearml-redis clearml-server clearml-fileserver clearml-webserver` (см. Шаг 17.1)
 11. **ClearML credentials** настраиваются через веб-интерфейс (http://localhost:8080) или переменные окружения
-12. **Для ClearML** используйте `poetry run python scripts/clearml/` для всех скриптов
+12. **Для ClearML** используйте `python scripts/clearml/` для всех скриптов (в активированном окружении)
 
 ---
 

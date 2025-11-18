@@ -58,10 +58,10 @@ DVC автоматически кэширует результаты на осн
 
 ### 2.1. Настройка Pydantic для управления конфигурациями
 
-Pydantic установлен через Poetry (`pydantic = "^2.5.0"`, `pydantic-settings = "^2.1.0"`). Создан модуль `src/data_science_project/config_models.py` с моделями конфигураций.
+Pydantic установлен через UV (`pydantic>=2.5.0`, `pydantic-settings>=2.1.0`). Создан модуль `src/data_science_project/config_models.py` с моделями конфигураций.
 
-**Скриншот:** Установка Pydantic через Poetry
-*(Здесь должен быть скриншот вывода `poetry add pydantic pydantic-settings`)*
+**Скриншот:** Установка Pydantic через UV
+*(Здесь должен быть скриншот вывода `uv add pydantic pydantic-settings`)*
 
 ### 2.2. Создание конфигураций для разных алгоритмов
 
@@ -142,7 +142,7 @@ Pydantic интегрирован во все скрипты пайплайна 
 2. Структура DVC pipeline
 3. Граф зависимостей пайплайна
 4. Результат выполнения пайплайна с кэшированием
-5. Установка Pydantic через Poetry
+5. Установка Pydantic через UV
 6. Структура Pydantic моделей
 7. Пример ошибки валидации
 8. Пример композиции конфигураций

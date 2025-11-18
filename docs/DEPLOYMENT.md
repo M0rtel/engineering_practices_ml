@@ -16,7 +16,7 @@
 ### Предварительные требования
 
 - Python 3.10+
-- Poetry
+- UV (быстрый менеджер пакетов для Python)
 - Git
 - Docker и Docker Compose (для MinIO и ClearML)
 
@@ -27,53 +27,65 @@ git clone https://github.com/gorobets/engineering_practices_ml.git
 cd engineering_practices_ml
 ```
 
-### Шаг 2: Установка зависимостей
+### Шаг 2: Создание виртуального окружения
 
 ```bash
-# Установка Poetry (если не установлен)
-curl -sSL https://install.python-poetry.org | python3 -
+# Создание виртуального окружения
+uv venv
 
-# Установка зависимостей проекта
-poetry install
-
-# Активация виртуального окружения
-poetry shell
+# Активация окружения
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate  # Windows
 ```
 
-### Шаг 3: Настройка DVC
+### Шаг 3: Установка зависимостей
+
+```bash
+# Установка UV (если не установлен)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Установка зависимостей проекта (в активированном окружении, включая dev)
+uv sync --all-extras
+```
+
+### Шаг 4: Настройка DVC
 
 ```bash
 # Инициализация DVC
-poetry run dvc init --no-scm
+# Убедитесь, что виртуальное окружение активировано!
+dvc init --no-scm
 
 # Настройка remote storage (выберите один вариант)
 # Локальное хранилище
-poetry run dvc remote add local storage/local
-poetry run dvc remote default local
+dvc remote add local storage/local
+dvc remote default local
 
 # MinIO (требует запущенный MinIO)
-poetry run dvc remote add minio s3://engineering-practices-ml/dvc
-poetry run dvc remote modify minio endpointurl http://localhost:9000
-poetry run dvc remote modify minio access_key_id minioadmin --local
-poetry run dvc remote modify minio secret_access_key minioadmin --local
-poetry run dvc remote default minio
+dvc remote add minio s3://engineering-practices-ml/dvc
+dvc remote modify minio endpointurl http://localhost:9000
+dvc remote modify minio access_key_id minioadmin --local
+dvc remote modify minio secret_access_key minioadmin --local
+dvc remote default minio
 ```
 
 ### Шаг 4: Настройка pre-commit hooks
 
 ```bash
-poetry run pre-commit install
-poetry run pre-commit run --all-files
+# Убедитесь, что виртуальное окружение активировано!
+pre-commit install
+pre-commit run --all-files
 ```
 
 ### Шаг 5: Запуск пайплайна
 
 ```bash
 # Добавление исходных данных
-poetry run dvc add data/raw/WineQT.csv
+# Убедитесь, что виртуальное окружение активировано!
+dvc add data/raw/WineQT.csv
 
 # Запуск пайплайна
-poetry run dvc repro
+dvc repro
 ```
 
 ## Развертывание с Docker
@@ -124,7 +136,7 @@ docker compose down
 aws s3 mb s3://engineering-practices-ml-dvc
 
 # Настройка DVC для S3
-poetry run dvc remote add s3 s3://engineering-practices-ml-dvc/dvc
+dvc remote add s3 s3://engineering-practices-ml-dvc/dvc
 
 # Настройка credentials через переменные окружения
 export AWS_ACCESS_KEY_ID=your_key
@@ -138,7 +150,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret
    ```bash
    sudo apt-get update
    sudo apt-get install -y python3.10 python3-pip git
-   curl -sSL https://install.python-poetry.org | python3 -
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 3. Клонируйте репозиторий и настройте проект
 4. Настройте systemd service для автоматического запуска
@@ -155,7 +167,7 @@ pip install gsutil
 gsutil mb gs://engineering-practices-ml-dvc
 
 # Настройка DVC для GCS
-poetry run dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
+dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
 ```
 
 ### Azure
@@ -164,9 +176,9 @@ poetry run dvc remote add gcs gs://engineering-practices-ml-dvc/dvc
 
 ```bash
 # Настройка DVC для Azure
-poetry run dvc remote add azure azure://engineering-practices-ml-dvc/dvc
-poetry run dvc remote modify azure account_name your_account_name
-poetry run dvc remote modify azure account_key your_account_key --local
+dvc remote add azure azure://engineering-practices-ml-dvc/dvc
+dvc remote modify azure account_name your_account_name
+dvc remote modify azure account_key your_account_key --local
 ```
 
 ## Настройка CI/CD
@@ -195,9 +207,9 @@ test:
   stage: test
   image: python:3.10
   script:
-    - pip install poetry
-    - poetry install
-    - poetry run pytest
+    - pip install uv
+    - uv sync
+    - pytest  # Убедитесь, что виртуальное окружение активировано!
 
 build:
   stage: build
@@ -252,7 +264,7 @@ docker compose logs -f clearml-server
 3. Создайте credentials в Settings > Workspace
 4. Настройте локальный клиент:
    ```bash
-   poetry run python scripts/clearml/init_clearml.py \
+python scripts/clearml/init_clearml.py \
      --api-host http://your-clearml-server:8008 \
      --web-host http://your-clearml-server:8080 \
      --access-key <your-key> \
@@ -298,7 +310,7 @@ docker compose ps minio
 
 ```bash
 # Запуск с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 ```
@@ -315,18 +327,18 @@ poetry run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Проверка статуса
-poetry run dvc status
+dvc status
 
 # Очистка кэша
-poetry run dvc cache dir
-poetry run dvc cache clean
+dvc cache dir
+dvc cache clean
 ```
 
 ### Проблемы с ClearML
 
 ```bash
 # Проверка подключения
-poetry run python -c "from clearml import Task; print('OK')"
+python -c "from clearml import Task; print('OK')"
 
 # Просмотр логов
 docker compose logs clearml-server

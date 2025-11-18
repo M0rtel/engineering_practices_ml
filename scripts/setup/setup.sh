@@ -5,29 +5,66 @@ set -e
 
 echo "🚀 Настройка проекта Engineering Practices ML..."
 
-# Проверка наличия Poetry
-if ! command -v poetry &> /dev/null; then
-    echo "❌ Poetry не установлен. Устанавливаю..."
-    curl -sSL https://install.python-poetry.org | python3 -
+# Проверка наличия UV
+if ! command -v uv &> /dev/null; then
+    echo "❌ UV не установлен. Устанавливаю..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
-# Установка зависимостей
+# Создание виртуального окружения
+echo "🐍 Создание виртуального окружения..."
+if [ ! -d ".venv" ]; then
+    uv venv
+    echo "✅ Виртуальное окружение создано в .venv/"
+else
+    echo "ℹ️  Виртуальное окружение уже существует"
+fi
+
+# Определяем способ активации в зависимости от ОС
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    ACTIVATE_SCRIPT=".venv/Scripts/activate"
+    PYTHON_CMD=".venv/Scripts/python"
+else
+    ACTIVATE_SCRIPT=".venv/bin/activate"
+    PYTHON_CMD=".venv/bin/python"
+fi
+
+# Активация виртуального окружения для текущего скрипта
+source "$ACTIVATE_SCRIPT"
+
+# Установка зависимостей (включая dev зависимости)
 echo "📦 Установка зависимостей..."
-poetry install
+uv sync --all-extras
 
 # Настройка pre-commit hooks
 echo "🔧 Настройка pre-commit hooks..."
-poetry run pre-commit install
+"$PYTHON_CMD" -m pre_commit install
 
-# Создание виртуального окружения (если еще не создано)
-echo "🐍 Создание виртуального окружения..."
-poetry env info
+# Проверка версии Python
+echo "🐍 Проверка установки..."
+"$PYTHON_CMD" --version
+uv --version
 
+echo ""
 echo "✅ Настройка завершена!"
 echo ""
-echo "Для активации виртуального окружения выполните:"
-echo "  poetry shell"
+echo "📝 Следующие шаги:"
 echo ""
-echo "Для запуска pre-commit на всех файлах:"
-echo "  poetry run pre-commit run --all-files"
+echo "1. Активируйте виртуальное окружение:"
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    echo "   .venv\\Scripts\\activate"
+else
+    echo "   source .venv/bin/activate"
+fi
+echo ""
+echo "2. После активации все команды можно выполнять напрямую:"
+echo "   python script.py"
+echo "   dvc repro"
+echo "   pytest"
+echo ""
+echo "3. Для запуска pre-commit на всех файлах:"
+echo "   pre-commit run --all-files"
+echo ""
+echo "4. Для деактивации окружения:"
+echo "   deactivate"

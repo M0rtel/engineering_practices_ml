@@ -25,21 +25,28 @@
    cd engineering_practices_ml
    ```
 
-2. **Установите зависимости:**
+2. **Создайте и активируйте виртуальное окружение:**
    ```bash
-   poetry install
-   poetry shell
+   uv venv
+   source .venv/bin/activate  # Linux/macOS
+   # или
+   .venv\Scripts\activate  # Windows
    ```
 
-3. **Настройте проект:**
+3. **Установите зависимости:**
    ```bash
-   poetry run dvc init --no-scm
-   poetry run pre-commit install
+   uv sync
    ```
 
-4. **Запустите пайплайн:**
+4. **Настройте проект:**
    ```bash
-   poetry run dvc repro
+   dvc init --no-scm
+   pre-commit install
+   ```
+
+5. **Запустите пайплайн:**
+   ```bash
+   dvc repro
    ```
 
 📖 **Подробная инструкция:** [Quick Start Guide](QUICKSTART.md)
@@ -65,10 +72,10 @@ engineering_practices_ml/
 
 ```bash
 # Добавление данных в DVC
-poetry run dvc add data/raw/WineQT.csv
+dvc add data/raw/WineQT.csv
 
 # Отправка в remote storage
-poetry run dvc push
+dvc push
 ```
 
 ### Трекинг экспериментов
@@ -77,12 +84,12 @@ poetry run dvc push
 
 ```bash
 # Запуск эксперимента
-poetry run python scripts/experiments/run_experiment.py \
+python scripts/experiments/run_experiment.py \
   --model rf \
   --config config/experiments/exp_018_rf_100_10.yaml
 
 # Сравнение экспериментов
-poetry run python scripts/experiments/compare_experiments.py --list
+python scripts/experiments/compare_experiments.py --list
 ```
 
 ### ML Пайплайны
@@ -91,10 +98,10 @@ poetry run python scripts/experiments/compare_experiments.py --list
 
 ```bash
 # Запуск всего пайплайна
-poetry run dvc repro
+dvc repro
 
 # Запуск с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py \
+python scripts/pipeline/run_pipeline.py \
   --config config/train_params.yaml \
   --monitor
 ```
@@ -105,26 +112,26 @@ poetry run python scripts/pipeline/run_pipeline.py \
 
 ```bash
 # Обучение с трекингом
-poetry run python scripts/clearml/train_with_clearml.py \
+python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge
 
 # Управление моделями
-poetry run python scripts/clearml/manage_models.py --list
+python scripts/clearml/manage_models.py --list
 ```
 
 ## Документация
 
 - 📘 [Quick Start Guide](QUICKSTART.md) - Полное руководство по настройке
 - 🚀 [Deployment Guide](DEPLOYMENT.md) - Руководство по развертыванию
-- 📊 [Experiment Reports](reports/experiments/README.md) - Отчеты об экспериментах
+- 📊 [Experiment Reports](reports/README.md) - Отчеты об экспериментах
 - 📝 [Homework Reports](homework_1/REPORT.md) - Отчеты по домашним заданиям
 - 🔧 [API Reference](api/experiment_tracker.md) - Справочник API
 
 ## Требования
 
 - Python 3.10+
-- Poetry
+- UV
 - Docker (опционально)
 - Git
 

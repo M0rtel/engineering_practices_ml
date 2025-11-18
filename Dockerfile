@@ -8,26 +8,23 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==1.6.1
+# Install UV
+RUN pip install --no-cache-dir uv
 
-# Configure Poetry: Don't create virtual environment, install dependencies to system
-RUN poetry config virtualenvs.create false
-
-# Copy dependency files
-COPY pyproject.toml poetry.lock* ./
+# Copy dependency files and README (needed for package build)
+COPY pyproject.toml uv.lock* README.md ./
 
 # Install dependencies
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN uv sync --frozen --no-dev || uv sync --no-dev
 
 # Copy project files
 COPY . .
 
 # Install the project
-RUN poetry install --no-interaction --no-ansi
+RUN uv sync --frozen || uv sync
 
 # Set Python path
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/src
 
 # Initialize DVC (if not already initialized)
 # Note: DVC remote storage should be configured separately
