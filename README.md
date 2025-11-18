@@ -269,7 +269,7 @@ git checkout -b bugfix/fix-name
 
 ## Документация
 
-Документация проекта доступна онлайн на [GitHub Pages](https://gorobets.github.io/engineering_practices_ml/).
+Документация проекта доступна онлайн на [GitHub Pages](https://M0rtel.github.io/engineering_practices_ml/).
 
 ### Локальная документация
 
