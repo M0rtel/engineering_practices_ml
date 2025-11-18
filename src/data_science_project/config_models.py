@@ -88,9 +88,9 @@ class DecisionTreeParams(ModelParams):
     min_samples_leaf: int = Field(
         default=1, ge=1, description="Минимум образцов в листе"
     )
-    criterion: Literal[
-        "squared_error", "friedman_mse", "absolute_error", "poisson"
-    ] = Field(default="squared_error", description="Критерий разделения")
+    criterion: Literal["squared_error", "friedman_mse", "absolute_error", "poisson"] = (
+        Field(default="squared_error", description="Критерий разделения")
+    )
 
 
 class RandomForestParams(ModelParams):
@@ -106,9 +106,9 @@ class RandomForestParams(ModelParams):
     min_samples_leaf: int = Field(
         default=1, ge=1, description="Минимум образцов в листе"
     )
-    criterion: Literal[
-        "squared_error", "absolute_error", "friedman_mse", "poisson"
-    ] = Field(default="squared_error", description="Критерий разделения")
+    criterion: Literal["squared_error", "absolute_error", "friedman_mse", "poisson"] = (
+        Field(default="squared_error", description="Критерий разделения")
+    )
 
 
 class AdaBoostParams(ModelParams):

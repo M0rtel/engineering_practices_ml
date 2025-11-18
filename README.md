@@ -42,8 +42,8 @@ engineering_practices_ml/
 ├── reports/          # Отчеты и результаты
 │   ├── figures/      # Графики и визуализации
 │   └── models/       # Сохраненные модели
-├── pyproject.toml    # Конфигурация Poetry
-├── requirements.txt  # Зависимости проекта
+├── pyproject.toml    # Конфигурация проекта (UV)
+├── uv.lock          # Lock-файл зависимостей (UV)
 ├── Dockerfile        # Docker конфигурация
 └── README.md         # Этот файл
 ```
@@ -51,7 +51,7 @@ engineering_practices_ml/
 ## Требования
 
 - Python 3.10+
-- Poetry (для управления зависимостями)
+- UV (для управления зависимостями) - быстрый менеджер пакетов на Rust
 - Docker (опционально, для контейнеризации)
 
 ## Быстрый старт
@@ -60,86 +60,111 @@ engineering_practices_ml/
 
 **Краткая инструкция:**
 1. Клонировать репозиторий: `git clone <repository-url> && cd engineering_practices_ml`
-2. Установить Poetry (если не установлен): `curl -sSL https://install.python-poetry.org | python3 -`
-3. Установить зависимости: `poetry install`
-4. Активировать окружение: `poetry shell`
-5. Настроить pre-commit: `poetry run pre-commit install`
+2. Установить UV (если не установлен): `curl -LsSf https://astral.sh/uv/install.sh | sh` или `pip install uv`
+3. Создать виртуальное окружение: `uv venv`
+4. Активировать окружение: `source .venv/bin/activate` (Linux/macOS) или `.venv\Scripts\activate` (Windows)
+5. Установить зависимости: `uv sync --all-extras` (включая dev зависимости для разработки)
+6. Настроить pre-commit: `pre-commit install`
+
+**Или используйте автоматическую настройку:**
+```bash
+./scripts/setup/setup.sh
+source .venv/bin/activate  # После выполнения скрипта
+```
 
 ## Использование
 
 ### Запуск проекта
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
+# Активация окружения (если еще не активировано)
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate  # Windows
+
+# Запуск проекта
 python main.py
 ```
 
 ### Запуск ML пайплайна
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
 # Запуск всего пайплайна
-poetry run dvc repro
+dvc repro
 
 # Запуск конкретной стадии
-poetry run dvc repro prepare_data
-poetry run dvc repro train_model
+dvc repro prepare_data
+dvc repro train_model
 
 # Запуск с изменением параметров
-poetry run python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
+python scripts/pipeline/run_with_params.py train_model -S model_type=ridge
 
 # Запуск с мониторингом
-poetry run python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
+python scripts/pipeline/run_pipeline.py --config config/train_params.yaml --monitor
 ```
 
 ### Запуск экспериментов с ClearML
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
 # Обучение модели с трекингом в ClearML
-poetry run python scripts/clearml/train_with_clearml.py \
+python scripts/clearml/train_with_clearml.py \
   --config config/train_params.yaml \
   --model-type ridge \
   --experiment-name ridge_experiment_001
 
 # Сравнение экспериментов
-poetry run python scripts/clearml/compare_experiments.py --list
+python scripts/clearml/compare_experiments.py --list
 
 # Управление моделями
-poetry run python scripts/clearml/manage_models.py --list
+python scripts/clearml/manage_models.py --list
 ```
 
-Подробнее см. `docs/QUICKSTART.md` и `docs/homework_5/README.md`
+Подробнее см. `docs/QUICKSTART.md` и `docs/homework_5/REPORT.md`
 
 ### Форматирование кода
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
 # Black
-poetry run black src tests
+black src tests
 
 # isort
-poetry run isort src tests
+isort src tests
 
 # Ruff
-poetry run ruff check src tests
-poetry run ruff format src tests
+ruff check src tests
+ruff format src tests
 ```
 
 ### Линтинг
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
 # MyPy
-poetry run mypy src
+mypy src
 
 # Bandit (проверка безопасности)
-poetry run bandit -r src
+bandit -r src
 ```
 
 ### Тестирование
 
+**Важно:** Убедитесь, что виртуальное окружение активировано!
+
 ```bash
 # Запуск всех тестов
-poetry run pytest
+pytest
 
 # С покрытием кода
-poetry run pytest --cov=src --cov-report=html
+pytest --cov=src --cov-report=html
 ```
 
 ## Docker
@@ -180,7 +205,7 @@ docker compose down
 - **File Server:** http://localhost:8081
 - **Сервисы:** MongoDB, Elasticsearch, Redis, API Server, File Server, Web UI
 - **Отладочные порты:** MongoDB `27017`, Redis `6379`, Elasticsearch `9200/9300` проброшены на хост для диагностики (через `mongo`, `redis-cli`, `curl http://localhost:9200/_cluster/health`)
-- **Перед запуском ClearML пайплайнов:** создайте шаблонные задачи (`prepare_data_template`, `validate_data_template`, `train_model_template`, `evaluate_model_template`) с помощью `poetry run clearml-task create ...`, как описано в `docs/QUICKSTART.md`
+- **Перед запуском ClearML пайплайнов:** создайте шаблонные задачи (`prepare_data_template`, `validate_data_template`, `train_model_template`, `evaluate_model_template`) с помощью `python scripts/clearml/create_task_templates.py --all`, как описано в `docs/QUICKSTART.md`
 - **Уведомления:** настройте, например, Slack Webhook (Settings → Workspace → Notifications) и добавьте параметры в `~/.clearml/clearml.conf`
 
 **Примечание:** ClearML Server состоит из нескольких сервисов. Первый запуск может занять 1-2 минуты для инициализации.
@@ -237,7 +262,7 @@ git checkout -b bugfix/fix-name
 - **DVC** - версионирование данных и моделей, оркестрация пайплайнов
 - **ClearML** - MLOps платформа для трекинга экспериментов и управления моделями
 - **Pydantic** - валидация и управление конфигурациями
-- **Poetry** - управление зависимостями
+- **UV** - быстрый менеджер пакетов для Python (написан на Rust)
 - **MinIO** - S3-совместимое хранилище для DVC
 - **GitHub Actions** - CI/CD автоматизация
 - **MkDocs** - генерация и публикация документации

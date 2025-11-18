@@ -1,6 +1,6 @@
 stages:
   prepare_data:
-    cmd: python scripts/data/prepare_data.py --config ${config_file}
+    cmd: PYTHONPATH=. .venv/bin/python scripts/data/prepare_data.py --config ${config_file}
     deps:
       - data/raw/WineQT.csv
       - ${config_file}
@@ -16,7 +16,7 @@ stages:
       - reports/plots/data_distribution.json
 
   validate_data:
-    cmd: python scripts/data/validate_data.py --config ${config_file}
+    cmd: PYTHONPATH=. .venv/bin/python scripts/data/validate_data.py --config ${config_file}
     deps:
       - data/processed/train.csv
       - data/processed/test.csv
@@ -28,7 +28,7 @@ stages:
       - reports/metrics/data_validation.json
 
   train_model:
-    cmd: python scripts/models/train_model.py --config ${config_file} --model-type ${model_type}
+    cmd: PYTHONPATH=. .venv/bin/python scripts/models/train_model.py --config ${config_file} --model-type ${model_type}
     deps:
       - data/processed/train.csv
       - ${config_file}
@@ -43,7 +43,7 @@ stages:
       - reports/metrics/model_metrics.json
 
   evaluate_model:
-    cmd: python scripts/models/evaluate_model.py --config ${config_file}
+    cmd: PYTHONPATH=. .venv/bin/python scripts/models/evaluate_model.py --config ${config_file}
     deps:
       - models/model.pkl
       - data/processed/test.csv
@@ -57,7 +57,7 @@ stages:
       - reports/plots/confusion_matrix.json
 
   monitor_pipeline:
-    cmd: python scripts/pipeline/run_pipeline.py --config ${config_file} --monitor --report-only
+    cmd: PYTHONPATH=. .venv/bin/python scripts/pipeline/run_pipeline.py --config ${config_file} --monitor --report-only
     deps:
       - reports/metrics/evaluation.json
       - ${config_file}

@@ -178,9 +178,9 @@ class PipelineMonitor:
             "skipped": skipped,
             "pending": total_stages - completed - failed - skipped,
             "total_duration": total_duration,
-            "success_rate": (completed + skipped) / total_stages
-            if total_stages > 0
-            else 0.0,
+            "success_rate": (
+                (completed + skipped) / total_stages if total_stages > 0 else 0.0
+            ),
         }
 
     def print_summary(self) -> None:
@@ -195,7 +195,7 @@ class PipelineMonitor:
         print(f"Ошибок: {summary['failed']}")
         print(f"Ожидает: {summary['pending']}")
         print(f"Общее время: {summary['total_duration']:.2f}с")
-        print(f"Успешность: {summary['success_rate']*100:.1f}%")
+        print(f"Успешность: {summary['success_rate'] * 100:.1f}%")
         print("=" * 50)
 
         for stage_name, stage in self.stages.items():
