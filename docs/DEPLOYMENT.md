@@ -23,7 +23,7 @@
 ### Шаг 1: Клонирование репозитория
 
 ```bash
-git clone https://github.com/gorobets/engineering_practices_ml.git
+git clone https://github.com/M0rtel/engineering_practices_ml.git
 cd engineering_practices_ml
 ```
 
