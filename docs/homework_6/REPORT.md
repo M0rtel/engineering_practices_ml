@@ -60,6 +60,8 @@
 
 ## 2. Публикация в Git Pages (3 балла)
 
+![img.png](screenshots/git_pages.png)
+
 ### 2.1. Настройка GitHub Actions
 
 Создан workflow для автоматической публикации документации:
