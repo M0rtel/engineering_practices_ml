@@ -155,29 +155,7 @@ ClearML автоматически отслеживает:
 ### 5.4. Сохранение в Git репозитории
 
 Отчет сохранен в `docs/homework_5/REPORT.md` и включен в Git репозиторий.
-
-## 6. Скриншоты
-
-Скриншоты для отчета хранятся в `docs/homework_5/screenshots/`. Для каждой секции выше используется файл с префиксом `hw5_step_<номер>.png`:
-
-1. `hw5_step_01_docker_up.png` — запуск ClearML Server
-2. `hw5_step_02_volumes.png` — список volumes
-3. `hw5_step_03_project_dashboard.png` — проект в веб-интерфейсе
-4. `hw5_step_04_credentials.png` — настройки credentials
-5. `hw5_step_05_tracker_code.png` — пример использования `ClearMLTracker`
-6. `hw5_step_06_compare_experiments.png` — сравнение экспериментов
-7. `hw5_step_07_metrics_ui.png` — метрики эксперимента
-8. `hw5_step_08_experiment_dashboard.png` — дашборд
-9. `hw5_step_09_model_registration.png` — регистрация модели
-10. `hw5_step_10_model_metadata.png` — метаданные модели
-11. `hw5_step_11_model_versions.png` — версии моделей
-12. `hw5_step_12_models_compare.png` — сравнение моделей
-13. `hw5_step_13_pipeline_graph.png` — граф пайплайна
-14. `hw5_step_14_pipeline_run.png` — запуск пайплайна
-15. `hw5_step_15_pipeline_monitoring.png` — мониторинг стадий
-16. `hw5_step_16_notifications.png` — настройки уведомлений
-
-> Если вы снимаете скриншоты заново, сохраняйте их под теми же именами — отчет автоматически будет ссылаться на актуальные изображения.
+Скриншоты для отчета хранятся в `docs/homework_5/screenshots/`.
 
 ## Заключение
 
