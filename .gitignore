@@ -135,7 +135,6 @@ dmypy.json
 Thumbs.db
 
 *.csv
-*.lock
 *.dvc
 *json
 .dvc/*
@@ -193,3 +192,4 @@ reports/plots/*
 !reports/experiments/.gitkeep
 !reports/plots/.gitkeep
 data_logs/
+dvc.lock
