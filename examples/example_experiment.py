@@ -1,6 +1,5 @@
 """Пример использования системы трекинга экспериментов."""
 
-
 from src.data_science_project.experiment_tracker import (
     DVCExperimentTracker,
     experiment,
