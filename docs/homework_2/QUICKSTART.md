@@ -1,6 +1,7 @@
 ## Быстрый старт: ДЗ 2 — DVC и версионирование данных/моделей
 
 Этот `QUICKSTART.md` описывает только шаги, которые нужны для **воспроизведения ДЗ 2**.
+Он основан на **Шаге 6 и Шаге 11** из общего `docs/QUICKSTART.md` и фокусируется на настройке DVC и remote storage именно для этого ДЗ.
 
 Убедитесь, что файл `data/raw/WineQT.csv` присутствует в репозитории (или скачайте его из указанных в задании источников).
 
@@ -11,7 +12,7 @@
 ```bash
 dvc init --no-scm
 ```
-![img.png](img.png)
+![img.png](screenshots/img.png)
 
 Проверьте конфигурацию:
 
@@ -21,7 +22,7 @@ dvc remote list
 cat .dvc/config || echo "Конфиг DVC будет создан автоматически при настройке remote"
 ```
 
-![img_1.png](img_1.png)
+![img_1.png](screenshots/img_1.png)
 
 Подробности см. в `docs/homework_2/REPORT.md`, раздел «Настройка DVC».
 
@@ -33,7 +34,7 @@ dvc remote add -d local storage/local
 dvc remote list
 ```
 
-![img_2.png](img_2.png)
+![img_2.png](screenshots/img_2.png)
 
 ### 3. Настройка MinIO (через docker-compose)
 
@@ -43,7 +44,7 @@ dvc remote list
 docker compose up -d minio
 ```
 
-![img_3.png](img_3.png)
+![img_3.png](screenshots/img_3.png)
 
 Проверьте, что MinIO доступен по адресу `http://localhost:9000`:
 
@@ -57,7 +58,20 @@ dvc remote add minio s3://engineering-practices-ml/dvc
 dvc remote modify minio endpointurl http://localhost:9000
 ```
 
-> При необходимости креденшелы для MinIO можно настроить через переменные окружения или `.dvc/config.local`.
+В активированном окружении задайте креденшели:
+   ```bash
+   export AWS_ACCESS_KEY_ID=minioadmin
+   export AWS_SECRET_ACCESS_KEY=minioadmin
+   export AWS_DEFAULT_REGION=us-east-1
+   ```
+
+Откройте MinIO UI: `http://localhost:9000`
+   Логин/пароль: `minioadmin` / `minioadmin`.
+
+На вкладке Buckets создайте bucket с именем:
+   ```text
+   engineering-practices-ml
+   ```
 
 ### 4. Добавление данных в DVC
 
@@ -65,11 +79,11 @@ dvc remote modify minio endpointurl http://localhost:9000
 
 ```bash
 dvc add data/raw/WineQT.csv
-git add data/raw/WineQT.csv.dvc
+git add -f data/raw/WineQT.csv.dvc
 git commit -m "data: add WineQT dataset"
 ```
 
-![img_4.png](img_4.png)
+![img_4.png](screenshots/img_4.png)
 
 ### 5. Запуск DVC pipeline
 
@@ -86,7 +100,7 @@ git commit -m "data: add WineQT dataset"
 dvc repro
 ```
 
-![img_5.png](img_5.png)
+![img_5.png](screenshots/img_5.png)
 
 Проверка графа зависимостей:
 
@@ -94,7 +108,7 @@ dvc repro
 dvc dag
 ```
 
-![img_6.png](img_6.png)
+![img_6.png](screenshots/img_6.png)
 
 ### 6. Версионирование артефактов в remote
 
@@ -104,7 +118,8 @@ dvc dag
 dvc push
 ```
 
-![img_7.png](img_7.png)
+![img_9.png](screenshots/img_9.png)
+![img_8.png](screenshots/img_8.png)
 
 Для разных remote (local / minio / s3) можно использовать:
 

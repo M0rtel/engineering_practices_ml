@@ -1,22 +1,11 @@
 ## Быстрый старт: ДЗ 3 — DVC Experiments и трекинг экспериментов
 
 Этот `QUICKSTART.md` описывает, как воспроизвести **систему экспериментов из ДЗ 3**.
-
-### 1. Базовая подготовка
-
-```bash
-git clone https://github.com/M0rtel/engineering_practices_ml.git
-cd engineering_practices_ml
-
-uv venv
-source .venv/bin/activate
-
-uv sync --all-extras
-```
+Он логически продолжает настройки из `docs/homework_2/QUICKSTART.md` и соответствует разделу **«Шаг 12: Работа с экспериментами»** в общем `docs/QUICKSTART.md`, но без ссылок на удалённые скрипты.
 
 Убедитесь, что DVC уже настроен и данные добавлены (см. `docs/homework_2/QUICKSTART.md`).
 
-### 2. Структура для экспериментов
+### 1. Структура для экспериментов
 
 В проекте уже подготовлены директории:
 
@@ -31,35 +20,41 @@ ls config/experiments || echo "Каталог с конфигами экспер
 ls reports/experiments
 ```
 
-### 3. Запуск экспериментов через DVC Experiments
-
-Пример запуска одного эксперимента (через DVC):
+Если каталог `config/experiments/` пустой, то сначала сгенерируй конфиги:
 
 ```bash
-dvc exp run
+python scripts/experiments/generate_experiments.py
 ```
 
-Если в текущей версии репозитория экспериментальные конфиги не активны, вы всё равно можете:
-
-- изменить параметры в `params.yaml` (например, `model_type`)
-- запустить `dvc repro` и считать это отдельным экспериментом
-
-### 4. Список и сравнение экспериментов
+После этого в `config/experiments/` появятся файлы `exp_XXX_*.yaml` и `.json`, и скрипт
 
 ```bash
-# Список экспериментов
-dvc exp list
-
-# Разница по метрикам
-dvc metrics diff
-
-# Разница по параметрам
-dvc params diff
+python scripts/experiments/run_all_experiments.py
 ```
 
-Дополнительно можно использовать Python API из модуля `src/data_science_project/experiment_tracker.py` (описан в `docs/homework_3/REPORT.md`).
+сможет их использовать.
 
-### 5. Отчёты и визуализация экспериментов
+![img_1.png](screenshots/img_1.png)
+
+
+### 2. Сравнение экспериментов
+
+В режиме `no_scm` команды `dvc metrics diff` и `dvc params diff` **недоступны**, поэтому сравнение делается по сохранённым файлам.
+
+1. **Метрики**:
+
+   - после каждого эксперимента смотри файлы в `reports/metrics/`
+     (например, `model_metrics.json`, `evaluation.json`);
+   - сравнивай значения метрик (`r2`, `rmse`, `mae` и т.п.) между запусками.
+
+2. **Параметры**:
+
+   - фиксируй изменения в `params.yaml` или отдельных конфиг‑файлах (`config/experiments/...`);
+   - удобно хранить несколько вариантов параметров (по одному файлу на эксперимент).
+
+Дополнительно можно использовать Python API из модуля `src/data_science_project/experiment_tracker.py` (описан в `docs/homework_3/REPORT.md`) для логирования и сравнения экспериментов.
+
+### 3. Отчёты и визуализация экспериментов
 
 Сводные результаты и скриншоты:
 

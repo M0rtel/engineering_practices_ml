@@ -1,18 +1,7 @@
 ## Быстрый старт: ДЗ 4 — DVC Pipelines и Pydantic конфигурации
 
 Этот `QUICKSTART.md` показывает, как запустить **ML-пайплайн из ДЗ 4**.
-
-### 1. Базовая подготовка
-
-```bash
-git clone https://github.com/M0rtel/engineering_practices_ml.git
-cd engineering_practices_ml
-
-uv venv
-source .venv/bin/activate
-
-uv sync --all-extras
-```
+Он опирается на настройки DVC и данных из `docs/homework_2/QUICKSTART.md` и конкретизирует для ДЗ 4 то, что описано в общем `docs/QUICKSTART.md` в разделах про пайплайн (**Шаги 6–10 и 13**).
 
 Убедитесь, что:
 
@@ -28,6 +17,8 @@ Pydantic-модели описаны в `src/data_science_project/config_models.
 ```bash
 cat config/train_params.yaml
 ```
+
+![img.png](screenshots/img.png)
 
 При запуске стадий пайплайна ошибки в конфиге (типы, диапазоны) будут отловлены автоматически.
 
@@ -56,6 +47,8 @@ dvc repro train_model
 dvc repro evaluate_model
 dvc repro monitor_pipeline
 ```
+
+![img_1.png](screenshots/img_1.png)
 
 Просмотр графа:
 

@@ -427,6 +427,63 @@ dvc pull --remote minio
 - Перед `dvc pull` убедитесь, что все стадии pipeline выполнены, иначе могут возникнуть ошибки с отсутствующими файлами.
 - Если default remote не установлен, используйте `-r <remote_name>` для указания конкретного remote.
 
+### Типичные ошибки с MinIO и как их исправить
+
+**Ошибка 1: InvalidAccessKeyId (неверный Access Key / Secret Key)**
+
+Сообщение:
+
+```text
+The Access Key Id you provided does not exist in our records.
+```
+
+**Решение:**
+
+1. Убедитесь, что MinIO запущен:
+
+   ```bash
+   docker compose up -d minio
+   ```
+
+2. В активированном окружении задайте креденшели (по умолчанию из `docker-compose.yml`):
+
+   ```bash
+   export AWS_ACCESS_KEY_ID=minioadmin
+   export AWS_SECRET_ACCESS_KEY=minioadmin
+   export AWS_DEFAULT_REGION=us-east-1
+   ```
+
+3. После этого повторно выполните:
+
+   ```bash
+   dvc push -r minio
+   ```
+
+**Ошибка 2: NoSuchBucket (бакет не существует)**
+
+Сообщение:
+
+```text
+The specified bucket does not exist.
+```
+
+**Решение:**
+
+1. Откройте MinIO UI: `http://localhost:9000` (логин/пароль по умолчанию `minioadmin` / `minioadmin`).
+2. Создайте bucket с именем:
+
+   ```text
+   engineering-practices-ml
+   ```
+
+3. Повторите команду:
+
+   ```bash
+   dvc push -r minio
+   ```
+
+> Подсказка: вместо ручного экспорта переменных можно создать `.dvc/config.local` и сохранить там `access_key_id` и `secret_access_key` для remote `minio`.
+
 ## Шаг 12: Работа с экспериментами
 
 ### 12.1. Настройка системы экспериментов

@@ -1,22 +1,11 @@
 ## Быстрый старт: ДЗ 6 — Документация и GitHub Pages
 
 Этот `QUICKSTART.md` описывает, как воспроизвести **документацию и публикацию на GitHub Pages из ДЗ 6**.
-
-### 1. Базовая подготовка
-
-```bash
-git clone https://github.com/M0rtel/engineering_practices_ml.git
-cd engineering_practices_ml
-
-uv venv
-source .venv/bin/activate
-
-uv sync --all-extras
-```
+Он соответствует разделам про документацию и GitHub Pages в общем `docs/QUICKSTART.md` (шаги про MkDocs и workflow `docs.yml`) и связывает их с отчётом `docs/homework_6/REPORT.md`.
 
 Убедитесь, что у вас настроен доступ к GitHub (SSH или HTTPS) и есть права на репозиторий `M0rtel/engineering_practices_ml`.
 
-### 2. Локальная сборка документации MkDocs
+### 1. Локальная сборка документации MkDocs
 
 Конфиг документации: `mkdocs.yml`
 Исходники: каталог `docs/`
@@ -41,7 +30,7 @@ mkdocs serve
 - главная страница открывается,
 - есть разделы Quick Start, Deployment, отчёты по ДЗ, отчёты об экспериментах.
 
-### 3. Настройка GitHub Pages
+### 2. Настройка GitHub Pages
 
 1. Зайдите в настройки репозитория на GitHub: **Settings → Pages**
 2. В разделе **Source** выберите:
@@ -50,7 +39,7 @@ mkdocs serve
 
 После этого GitHub Pages будет использовать workflow из `.github/workflows/docs.yml`.
 
-### 4. Проверка workflow публикации документации
+### 3. Проверка workflow публикации документации
 
 Workflow: `.github/workflows/docs.yml`
 
@@ -61,18 +50,12 @@ Workflow: `.github/workflows/docs.yml`
 
 Для проверки можно сделать небольшой коммит в документацию и запушить в `main`:
 
-```bash
-git add docs/index.md
-git commit -m "docs: test docs workflow"
-git push origin main
-```
-
 Затем:
 - откройте вкладку **Actions** в GitHub,
 - найдите workflow `Documentation / docs`,
 - убедитесь, что все шаги прошли успешно.
 
-### 5. Доступ к опубликованной документации
+### 4. Доступ к опубликованной документации
 
 После успешного workflow GitHub Pages будет доступен по адресу:
 
@@ -83,7 +66,7 @@ git push origin main
 - работают ссылки на отчёты по ДЗ,
 - отображаются отчёты об экспериментах и графики.
 
-### 6. Где смотреть детали по ДЗ 6
+### 5. Где смотреть детали по ДЗ 6
 
 - Описание устройства документации и GitHub Pages: `docs/homework_6/REPORT.md`
 - Скриншоты: `docs/homework_6/screenshots/`
