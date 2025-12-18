@@ -290,12 +290,12 @@ make docs-serve
 - **Quick Start Guide** (`docs/QUICKSTART.md`) - Полное руководство по настройке
 - **Deployment Guide** (`docs/DEPLOYMENT.md`) - Руководство по развертыванию
 - **Homework Reports:**
-  - `docs/homework_1/REPORT.md` - ДЗ 1: Настройка рабочего места Data Scientist
-  - `docs/homework_2/REPORT.md` - ДЗ 2: Версионирование данных и моделей с DVC
-  - `docs/homework_3/REPORT.md` - ДЗ 3: Трекинг экспериментов с DVC
-  - `docs/homework_4/REPORT.md` - ДЗ 4: Автоматизация ML пайплайнов
-  - `docs/homework_5/REPORT.md` - ДЗ 5: ClearML для MLOps
-  - `docs/homework_6/REPORT.md` - ДЗ 6: Документация и отчеты
+  - **ДЗ 1:** [`docs/homework_1/QUICKSTART.md`](docs/homework_1/QUICKSTART.md) | [`docs/homework_1/REPORT.md`](docs/homework_1/REPORT.md) - Настройка рабочего места Data Scientist
+  - **ДЗ 2:** [`docs/homework_2/QUICKSTART.md`](docs/homework_2/QUICKSTART.md) | [`docs/homework_2/REPORT.md`](docs/homework_2/REPORT.md) - Версионирование данных и моделей с DVC
+  - **ДЗ 3:** [`docs/homework_3/QUICKSTART.md`](docs/homework_3/QUICKSTART.md) | [`docs/homework_3/REPORT.md`](docs/homework_3/REPORT.md) - Трекинг экспериментов с DVC
+  - **ДЗ 4:** [`docs/homework_4/QUICKSTART.md`](docs/homework_4/QUICKSTART.md) | [`docs/homework_4/REPORT.md`](docs/homework_4/REPORT.md) - Автоматизация ML пайплайнов
+  - **ДЗ 5:** [`docs/homework_5/QUICKSTART.md`](docs/homework_5/QUICKSTART.md) | [`docs/homework_5/REPORT.md`](docs/homework_5/REPORT.md) - ClearML для MLOps
+  - **ДЗ 6:** [`docs/homework_6/QUICKSTART.md`](docs/homework_6/QUICKSTART.md) | [`docs/homework_6/REPORT.md`](docs/homework_6/REPORT.md) - Документация и отчеты
 - **Experiment Reports** - Автоматически сгенерированные отчеты об экспериментах
 - **API Reference** - Справочник API для всех модулей
 - **Git Workflow** (`docs/GIT_WORKFLOW.md`) - Документация по Git workflow

@@ -126,6 +126,12 @@ python scripts/clearml/manage_models.py --list
 - 🚀 [Deployment Guide](DEPLOYMENT.md) - Руководство по развертыванию
 - 📊 [Experiment Reports](reports/README.md) - Отчеты об экспериментах
 - 📝 [Homework Reports](homework_1/REPORT.md) - Отчеты по домашним заданиям
+  - [ДЗ 1: Quick Start](homework_1/QUICKSTART.md) | [Report](homework_1/REPORT.md)
+  - [ДЗ 2: Quick Start](homework_2/QUICKSTART.md) | [Report](homework_2/REPORT.md)
+  - [ДЗ 3: Quick Start](homework_3/QUICKSTART.md) | [Report](homework_3/REPORT.md)
+  - [ДЗ 4: Quick Start](homework_4/QUICKSTART.md) | [Report](homework_4/REPORT.md)
+  - [ДЗ 5: Quick Start](homework_5/QUICKSTART.md) | [Report](homework_5/REPORT.md)
+  - [ДЗ 6: Quick Start](homework_6/QUICKSTART.md) | [Report](homework_6/REPORT.md)
 - 🔧 [API Reference](api/experiment_tracker.md) - Справочник API
 
 ## Требования

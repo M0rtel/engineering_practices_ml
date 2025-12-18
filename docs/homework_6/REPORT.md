@@ -160,7 +160,8 @@ make report-generate
 
 Созданы подробные инструкции по воспроизведению:
 
-- **Quick Start Guide:** `docs/QUICKSTART.md` - полное руководство по настройке
+- **Quick Start Guide:** [`docs/homework_6/QUICKSTART.md`](QUICKSTART.md) - руководство по настройке документации и GitHub Pages для ДЗ 6
+- **Общий Quick Start Guide:** `docs/QUICKSTART.md` - полное руководство по настройке проекта
 - **Deployment Guide:** `docs/DEPLOYMENT.md` - руководство по развертыванию
 - **README:** `README.md` - краткая инструкция и обзор проекта
 

@@ -1091,11 +1091,12 @@ python -c "from src.data_science_project.clearml_tracker import ClearMLTracker; 
 
 1. **Изучите документацию:**
    - `README.md` - общая информация о проекте
-   - `docs/homework_1/REPORT.md` - настройка рабочего места
-   - `docs/homework_2/REPORT.md` - версионирование данных и моделей
-   - `docs/homework_3/REPORT.md` - трекинг экспериментов
-   - `docs/homework_4/REPORT.md` - автоматизация ML пайплайнов
-   - `docs/homework_5/REPORT.md` - ClearML для MLOps
+   - **ДЗ 1:** [`docs/homework_1/QUICKSTART.md`](homework_1/QUICKSTART.md) | [`docs/homework_1/REPORT.md`](homework_1/REPORT.md) - настройка рабочего места
+   - **ДЗ 2:** [`docs/homework_2/QUICKSTART.md`](homework_2/QUICKSTART.md) | [`docs/homework_2/REPORT.md`](homework_2/REPORT.md) - версионирование данных и моделей
+   - **ДЗ 3:** [`docs/homework_3/QUICKSTART.md`](homework_3/QUICKSTART.md) | [`docs/homework_3/REPORT.md`](homework_3/REPORT.md) - трекинг экспериментов
+   - **ДЗ 4:** [`docs/homework_4/QUICKSTART.md`](homework_4/QUICKSTART.md) | [`docs/homework_4/REPORT.md`](homework_4/REPORT.md) - автоматизация ML пайплайнов
+   - **ДЗ 5:** [`docs/homework_5/QUICKSTART.md`](homework_5/QUICKSTART.md) | [`docs/homework_5/REPORT.md`](homework_5/REPORT.md) - ClearML для MLOps
+   - **ДЗ 6:** [`docs/homework_6/QUICKSTART.md`](homework_6/QUICKSTART.md) | [`docs/homework_6/REPORT.md`](homework_6/REPORT.md) - документация и отчеты
 
 2. **Начните работу:**
    - Запустите полный pipeline: `dvc repro` (см. Шаг 13)
