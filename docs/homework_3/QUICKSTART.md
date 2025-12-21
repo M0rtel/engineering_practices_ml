@@ -54,6 +54,12 @@ python scripts/experiments/run_all_experiments.py
 
 Дополнительно можно использовать Python API из модуля `src/data_science_project/experiment_tracker.py` (описан в `docs/homework_3/REPORT.md`) для логирования и сравнения экспериментов.
 
+![img.png](screenshots/img3.png)
+
+![img_1.png](screenshots/img_2.png)
+
+Подный отчёт: engineering_practices_ml/reports/experiments/latest.md
+
 ### 3. Отчёты и визуализация экспериментов
 
 Сводные результаты и скриншоты:
