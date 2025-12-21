@@ -60,7 +60,122 @@ python scripts/experiments/run_all_experiments.py
 
 Подный отчёт: engineering_practices_ml/reports/experiments/latest.md
 
-### 3. Отчёты и визуализация экспериментов
+### 3. Фильтрация и поиск экспериментов
+
+Система фильтрации и поиска реализована в скрипте `scripts/experiments/compare_experiments.py`. Она работает следующим образом:
+
+#### 3.1. Загрузка экспериментов
+
+Все эксперименты загружаются из директорий:
+- `reports/experiments/*_params.json` — параметры экспериментов
+- `reports/metrics/*_metrics.json` — метрики экспериментов
+
+Функция `load_all_experiments()` автоматически находит все файлы и объединяет параметры с метриками для каждого эксперимента.
+
+#### 3.2. Фильтрация по модели
+
+Фильтрует эксперименты по типу модели (например, `RandomForest`, `LinearRegression`):
+
+```bash
+python scripts/experiments/compare_experiments.py --filter-model RandomForest
+```
+
+**Как работает:**
+- Функция `filter_experiments()` проверяет поле `model_name` в каждом эксперименте
+- Возвращает только эксперименты с указанным типом модели
+
+#### 3.3. Фильтрация по метрикам
+
+Фильтрует эксперименты по значениям метрик:
+
+```bash
+# Минимальный R² (коэффициент детерминации)
+python scripts/experiments/compare_experiments.py --min-r2 0.8
+
+# Максимальный RMSE (среднеквадратичная ошибка)
+python scripts/experiments/compare_experiments.py --max-rmse 0.5
+
+# Комбинация фильтров
+python scripts/experiments/compare_experiments.py --min-r2 0.7 --max-rmse 0.6
+```
+
+**Как работает:**
+- Функция `filter_experiments()` проверяет метрики в `exp["metrics"]`
+- `--min-r2`: оставляет только эксперименты с `test_r2 >= указанное_значение`
+- `--max-rmse`: оставляет только эксперименты с `test_rmse <= указанное_значение`
+- Фильтры можно комбинировать (логическое И)
+
+#### 3.4. Поиск по запросу
+
+Ищет эксперименты по ID или названию модели:
+
+```bash
+python scripts/experiments/compare_experiments.py --search forest
+```
+
+**Как работает:**
+- Функция `search_experiments()` выполняет поиск без учёта регистра
+- Ищет вхождение запроса в:
+  - `experiment_id` (например, `exp_001_forest`)
+  - `model_name` (например, `RandomForest`)
+- Возвращает все эксперименты, где запрос найден хотя бы в одном из полей
+
+#### 3.5. Список всех экспериментов
+
+Показывает все доступные эксперименты с их метриками:
+
+```bash
+python scripts/experiments/compare_experiments.py --list
+```
+
+**Вывод:**
+```
+📋 Всего экспериментов: 26
+
+  exp_001_linear: LinearRegression - R²=0.8234, RMSE=0.6543
+  exp_002_ridge: Ridge - R²=0.8456, RMSE=0.6123
+  ...
+```
+
+#### 3.6. Экспорт в CSV
+
+Экспортирует все эксперименты в CSV файл для анализа:
+
+```bash
+python scripts/experiments/compare_experiments.py --export experiments.csv
+```
+
+**Как работает:**
+- Функция `export_to_dataframe()` создаёт pandas DataFrame
+- Каждая строка — один эксперимент
+- Колонки включают:
+  - `experiment_id`, `model_name`
+  - Параметры (с префиксом `param_`)
+  - Метрики (названия метрик как есть)
+
+#### 3.7. Сравнение двух экспериментов
+
+Сравнивает параметры и метрики двух экспериментов:
+
+```bash
+python scripts/experiments/compare_experiments.py --compare exp_001_linear exp_006_lasso_0.1
+```
+
+**Вывод:**
+```
+📊 Сравнение экспериментов:
+  exp_001_linear vs exp_002_ridge
+
+Параметры:
+  Модель: LinearRegression vs Ridge
+  alpha: N/A → 0.1
+
+Метрики:
+  test_r2: 0.8234 → 0.8456 (+0.0222)
+  test_rmse: 0.6543 → 0.6123 (-0.0420)
+```
+
+### 4. Отчёты и визуализация экспериментов
 
 Сводные результаты и скриншоты:
 

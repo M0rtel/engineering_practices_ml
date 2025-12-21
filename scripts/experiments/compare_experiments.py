@@ -10,6 +10,37 @@ import pandas as pd
 REPORTS_DIR = Path("reports")
 EXPERIMENTS_DIR = Path("experiments")
 
+# Маппинг названий моделей для поиска
+MODEL_NAME_MAPPING = {
+    "randomforest": "rf",
+    "random_forest": "rf",
+    "rf": "rf",
+    "ridge": "ridge",
+    "lasso": "lasso",
+    "elasticnet": "elasticnet",
+    "elastic_net": "elasticnet",
+    "linear": "linear",
+    "linearregression": "linear",
+    "knn": "knn",
+    "kneighbors": "knn",
+    "svr": "svr",
+    "supportvectormachine": "svr",
+    "dt": "dt",
+    "decisiontree": "dt",
+    "ada": "ada",
+    "adaboost": "ada",
+    "gb": "gb",
+    "gradientboosting": "gb",
+    "gradient_boosting": "gb",
+}
+
+
+def normalize_model_name(model_name: str) -> str:
+    """Нормализовать название модели для поиска."""
+    return MODEL_NAME_MAPPING.get(
+        model_name.lower().replace(" ", "").replace("_", ""), model_name.lower()
+    )
+
 
 def load_all_experiments() -> list[dict[str, Any]]:
     """Загрузить все эксперименты."""
@@ -27,10 +58,13 @@ def load_all_experiments() -> list[dict[str, Any]]:
             params_data = json.load(f)
             exp_data.update(params_data)
 
-        # Загружаем метрики
+        # Загружаем метрики (приоритет у отдельного файла метрик)
         if metrics_file.exists():
             with open(metrics_file) as f:
                 exp_data["metrics"] = json.load(f)
+        # Если метрики уже есть в params_data, но нет отдельного файла, используем их
+        elif "metrics" in params_data:
+            exp_data["metrics"] = params_data["metrics"]
 
         experiments.append(exp_data)
 
@@ -82,21 +116,48 @@ def filter_experiments(
     """Фильтровать эксперименты по критериям."""
     experiments = load_all_experiments()
 
+    # Нормализуем название модели для поиска
+    normalized_model_name = None
+    if model_name:
+        normalized_model_name = normalize_model_name(model_name)
+
     filtered = []
     for exp in experiments:
-        # Фильтр по модели
-        if model_name and exp.get("model_name") != model_name:
-            continue
+        # Фильтр по модели (нечувствительный к регистру и с маппингом)
+        if normalized_model_name:
+            exp_model_name = exp.get("model_name", "").lower()
+            exp_id = exp.get("experiment_id", "").lower()
+
+            # Проверяем точное совпадение или через маппинг
+            model_matches = (
+                exp_model_name == normalized_model_name
+                or normalized_model_name in exp_model_name
+                or exp_model_name in normalized_model_name
+            )
+
+            # Также проверяем в experiment_id
+            id_matches = normalized_model_name in exp_id
+
+            if not (model_matches or id_matches):
+                continue
 
         # Фильтр по метрикам
-        if "metrics" in exp:
-            if min_test_r2 and exp["metrics"].get("test_r2", 0) < min_test_r2:
+        if min_test_r2 or max_test_rmse:
+            if "metrics" not in exp:
+                # Если нужны метрики, но их нет, пропускаем эксперимент
                 continue
-            if (
-                max_test_rmse
-                and exp["metrics"].get("test_rmse", float("inf")) > max_test_rmse
-            ):
-                continue
+
+            metrics = exp["metrics"]
+            test_r2 = metrics.get("test_r2")
+            test_rmse = metrics.get("test_rmse")
+
+            if min_test_r2 is not None:
+                if test_r2 is None or test_r2 < min_test_r2:
+                    continue
+
+            if max_test_rmse is not None:
+                if test_rmse is None or test_rmse > max_test_rmse:
+                    continue
 
         filtered.append(exp)
 
@@ -107,13 +168,31 @@ def search_experiments(query: str) -> list[dict[str, Any]]:
     """Поиск экспериментов по запросу."""
     experiments = load_all_experiments()
     query_lower = query.lower()
+    normalized_query = normalize_model_name(query)
+
+    # Обратный маппинг: находим все модели, которые соответствуют запросу
+    matching_models = set()
+    for key, value in MODEL_NAME_MAPPING.items():
+        if query_lower in key or query_lower in value:
+            matching_models.add(value)
+            matching_models.add(key)
 
     results = []
     for exp in experiments:
         exp_id = exp.get("experiment_id", "").lower()
         model_name = exp.get("model_name", "").lower()
 
-        if query_lower in exp_id or query_lower in model_name:
+        # Поиск в experiment_id, model_name и через маппинг
+        matches = (
+            query_lower in exp_id
+            or query_lower in model_name
+            or normalized_query in model_name
+            or model_name in normalized_query
+            or model_name in matching_models
+            or any(match in exp_id for match in matching_models)
+        )
+
+        if matches:
             results.append(exp)
 
     return results

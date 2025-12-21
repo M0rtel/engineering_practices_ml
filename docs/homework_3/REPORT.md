@@ -69,6 +69,12 @@ Python API реализован в классе `DVCExperimentTracker` с мет
 
 **Примечание:** Примеры использования Python API см. в `docs/QUICKSTART.md` (Шаг 12.4).
 
+![img.png](screenshots/img7.png)
+
+![img_1.png](screenshots/img_8.png)
+
+![img_2.png](screenshots/img_29.png)
+
 ### 2.3. Система сравнения экспериментов
 
 Реализована система сравнения экспериментов:
@@ -82,12 +88,58 @@ Python API реализован в классе `DVCExperimentTracker` с мет
 
 ### 2.4. Фильтрация и поиск экспериментов
 
-Реализована система фильтрации и поиска:
-- Фильтрация по модели: `--filter-model`
-- Фильтрация по метрикам: `--min-r2`, `--max-rmse`
-- Поиск по запросу: `--search`
-- Экспорт в CSV: `--export`
-- Список всех экспериментов: `--list`
+Реализована система фильтрации и поиска в скрипте `scripts/experiments/compare_experiments.py`:
+
+**Механизм работы:**
+
+1. **Загрузка данных:**
+   - Функция `load_all_experiments()` сканирует директории `reports/experiments/` и `reports/metrics/`
+   - Объединяет параметры (`*_params.json`) с метриками (`*_metrics.json`) для каждого эксперимента
+   - Возвращает список словарей с полными данными экспериментов
+
+2. **Фильтрация по модели** (`--filter-model`):
+   - Функция `filter_experiments()` проверяет поле `model_name`
+   - Пример: `--filter-model RandomForest` вернёт только эксперименты с Random Forest
+
+3. **Фильтрация по метрикам** (`--min-r2`, `--max-rmse`):
+   - `--min-r2`: фильтрует эксперименты с `test_r2 >= указанное_значение`
+   - `--max-rmse`: фильтрует эксперименты с `test_rmse <= указанное_значение`
+   - Фильтры можно комбинировать (логическое И)
+   - Пример: `--min-r2 0.7 --max-rmse 0.6`
+
+4. **Поиск по запросу** (`--search`):
+   - Функция `search_experiments()` выполняет поиск без учёта регистра
+   - Ищет вхождение запроса в `experiment_id` или `model_name`
+   - Пример: `--search forest` найдёт все эксперименты с "forest" в ID или названии модели
+
+5. **Экспорт в CSV** (`--export`):
+   - Функция `export_to_dataframe()` создаёт pandas DataFrame
+   - Экспортирует все эксперименты с параметрами и метриками в CSV файл
+   - Удобно для анализа в Excel или pandas
+
+6. **Список всех экспериментов** (`--list`):
+   - Показывает все доступные эксперименты с их основными метриками
+   - Формат: `experiment_id: model_name - R²=value, RMSE=value`
+
+**Примеры использования:**
+```bash
+# Фильтрация по модели
+python scripts/experiments/compare_experiments.py --filter-model RandomForest
+
+# Фильтрация по метрикам
+python scripts/experiments/compare_experiments.py --min-r2 0.8 --max-rmse 0.5
+
+# Поиск
+python scripts/experiments/compare_experiments.py --search forest
+
+# Экспорт
+python scripts/experiments/compare_experiments.py --export results.csv
+
+# Список всех
+python scripts/experiments/compare_experiments.py --list
+```
+
+![img_3.png](screenshots/img_35.png)
 
 ## 3. Интеграция с кодом (2 балла)
 
